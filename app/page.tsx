@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function Homepage() {
   return (
     <div>
@@ -7,13 +9,13 @@ export default function Homepage() {
         Hier kannst du Texte, Bilder, Produkte oder was du willst einfügen.
       </p>
 
-      <img
-        src="/images/beispiel.jpg"
-        alt="Beispiel"
+      <Image
+        src="/images/Hintergrund.png"
+        alt="Hintergrund"
         className="mt-6 rounded-lg shadow-lg"
       />
     </div>
-  )
+  );
 }
 
     
