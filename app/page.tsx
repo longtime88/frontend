@@ -5,15 +5,14 @@ export default function Homepage() {
     <div>
       <h1 className="text-2xl font-bold">Willkommen bei Luna&Clean</h1>
 
-      <p className="mt-4">
-        Hier kannst du Texte, Bilder, Produkte oder was du willst einfügen.
-      </p>
-
+    <div className="realtive w-full h-72 mt-4">
       <Image
         src="/images/Hintergrund.png"
-        alt="Hintergrund"
-        className="mt-6 rounded-lg shadow-lg"
-      />
+          alt="Hintergrund"
+          fill
+        className="object-cover"
+        />
+      </div>
     </div>
   );
 }
