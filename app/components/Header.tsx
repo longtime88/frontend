@@ -12,7 +12,7 @@ export default function Header() {
         </h1>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full">
 
         <form action="#" method="get" className="flex items-center w-1/3 bg-gray-400">
           <input
@@ -20,12 +20,12 @@ export default function Header() {
             name="q"
             placeholder="Suche..."
             className="grow px-3 py-2 border border-gray-300 rounded-l-md 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
           />
           <button
             type="submit"
             className="px-4 py-2 bg-gray-500 border border-gray-300 border-l-0 
-                       rounded-r-md hover:bg-gray-300"
+                       rounded-r-md hover:bg-gray-300 md:px-6 transition text-white"
           >
             🔍
           </button>

@@ -11,7 +11,7 @@ export default function Anmelden() {
     e.preventDefault();
 
     try {
-      const res = await fetch("", {
+      const res = await fetch("Https://", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
