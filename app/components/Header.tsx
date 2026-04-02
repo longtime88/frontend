@@ -1,5 +1,10 @@
 "use client"
 import Link from "next/link"
+import HomeIcon from "@mui/icons-material/Home"
+import InfoIcon from "@mui/icons-material/Info"
+import ContactMailIcon from "@mui/icons-material/ContactMail"
+import LoginIcon from "@mui/icons-material/Login"
+import SearchIcon from "@mui/icons-material/Search"
 
 export default function Header() {
   return (
@@ -13,7 +18,6 @@ export default function Header() {
       </div>
 
       <div className="flex items-center justify-between w-full">
-
         <form action="#" method="get" className="flex items-center w-1/3 bg-gray-400">
           <input
             type="text"
@@ -25,21 +29,18 @@ export default function Header() {
           <button
             type="submit"
             className="px-4 py-2 bg-gray-500 border border-gray-300 border-l-0 
-                       rounded-r-md hover:bg-gray-300 md:px-6 transition text-white"
-          >
-            🔍
+                       rounded-r-md hover:bg-gray-300 md:px-6 transition text-white flex items-center">
+            <SearchIcon fontSize="small" />
           </button>
         </form>
-
         <nav>
           <ul className="flex flex-col gap-2 mt-4 md:flex-row md:gap-6 md:mt-0 items-start">
-            <li><Link href="/">Home</Link></li>
-            <li><Link href="/ueber-uns">Über uns</Link></li>
-            <li><Link href="/kontakt">Kontakt</Link></li>
-            <li><Link href="/anmelden">Anmelden</Link></li>
+            <li><Link href="/" className="flex items-center gap-2"><HomeIcon fontSize="small" /> Home</Link></li>
+            <li><Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link></li>
+            <li><Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link></li>
+            <li><Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link></li>
           </ul>
         </nav>
-
       </div>
     </header>
   )
