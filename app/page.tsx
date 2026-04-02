@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Category from "./components/Category";
-
+import Hello from "./components/hello";
   
 
 export default function Homepage() {
@@ -19,13 +19,17 @@ export default function Homepage() {
               priority
       />
       
-     <nav>
-      <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pt-6 hover:gap-4 transition hover:bg-blue-500">
-           <Category />    
+      <nav>
+        <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pt-6 hover:gap-4 transition ">
+          <Category />    
+        </div>
+      </nav>
+      
+      <div className="absolute top-1/3 left-10 transform -translate-y-1/2 z-10">
+        <Hello />
       </div>
-         </nav>
       </div>
-        </section>
+      </section>
       </span>
     </div>
   );
