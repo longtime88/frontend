@@ -5,6 +5,7 @@ import InfoIcon from "@mui/icons-material/Info"
 import ContactMailIcon from "@mui/icons-material/ContactMail"
 import LoginIcon from "@mui/icons-material/Login"
 import SearchIcon from "@mui/icons-material/Search"
+import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 
 export default function Header() {
   return (
@@ -39,6 +40,7 @@ export default function Header() {
             <li><Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link></li>
             <li><Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link></li>
             <li><Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link></li>
+            <li><Link href="/Warenkorb" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" /> Warenkorb</Link></li>
           </ul>
         </nav>
       </div>

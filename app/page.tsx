@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Category from "./components/Category";
 import Hello from "./components/hello";
-  
 
+  
 export default function Homepage() {
   return (
     <div>
@@ -19,16 +19,20 @@ export default function Homepage() {
               priority
       />
       
-      <nav>
-        <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pt-6 hover:gap-4 transition ">
+      <div className="relative w-full h-full flex flex-col">
+        <nav className="pt-6 flex justify-center z-20 relative">
           <Category />    
+        </nav>
+        
+        <div className="mt-8"></div>
+        
+        <div className="flex justify-center z-20 relative">
+          <Hello />
         </div>
-      </nav>
-      
-      <div className="absolute top-1/3 left-10 transform -translate-y-1/2 z-10">
-        <Hello />
       </div>
-      </div>
+            
+          </div>
+          
       </section>
       </span>
     </div>

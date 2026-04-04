@@ -28,7 +28,7 @@ export default function Category() {
               >
                 {cat.name}
                 {openCategory === cat.id && (
-                  <ul className="mt-2 text-sm">
+                  <ul className="mt-2 text-shadow-mauve-500 gab-4">
                     {cat.products.map((p, i) => (
                       <li key={i}>• {p}</li>
                     ))}
@@ -38,7 +38,7 @@ export default function Category() {
             ))}
           </div>
         </div>
-      </div>
+      </div>  
     </nav>
   );
 }
