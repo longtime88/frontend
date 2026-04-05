@@ -1,36 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import { login } from "@/lib/api";
 
 export default function Anmelden() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setMessage("");
+    setSuccess(false);
+    setSubmitting(true);
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setMessage("Login erfolgreich!");
-        console.log("Token:", data.token);
-        // Token speichern (localStorage oder Cookie)
-      } else {
-        setMessage(data.error || "Login fehlgeschlagen");
-      }
-    } catch (err) {
-      setMessage("Server nicht erreichbar");
-    } 
+      const data = await login(email, password);
+      localStorage.setItem("token", data.token);
+      setSuccess(true);
+      setMessage("Login erfolgreich!");
+      console.log("[Anmelden] Token gespeichert.");
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Login fehlgeschlagen";
+      console.error("[Anmelden] Login-Fehler:", err);
+      setSuccess(false);
+      setMessage(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -65,13 +65,20 @@ export default function Anmelden() {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+          disabled={submitting}
+          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Einloggen
+          {submitting ? "Wird angemeldet…" : "Einloggen"}
         </button>
 
         {message && (
-          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
+          <p
+            className={`mt-4 text-center text-sm font-medium ${
+              success ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {message}
+          </p>
         )}
       </form>
     </div>
