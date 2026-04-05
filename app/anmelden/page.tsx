@@ -17,7 +17,8 @@ export default function Anmelden() {
     setSubmitting(true);
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/login`, {
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
