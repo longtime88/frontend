@@ -1,20 +1,13 @@
 /**
  * API utility for communicating with the Symfony/FrankenPHP backend.
  *
- * In the browser, requests are sent to the same origin (e.g. /api/hello)
- * and Next.js rewrites them to the backend via next.config.ts — this
- * eliminates CORS issues entirely.
- *
- * On the server side (SSR / Route Handlers), the full internal URL is used
- * so the Next.js runtime can reach the backend directly over the Railway
- * private network.
+ * All requests (both client-side and SSR) are sent directly to the backend
+ * using the full internal Railway URL. This avoids CORS failures that occur
+ * when the browser resolves a relative URL against the frontend's own origin.
  */
 
-const IS_SERVER = typeof window === "undefined";
-
-const BASE_URL = IS_SERVER
-  ? (process.env.NEXT_PUBLIC_API_URL ?? "http://backend.railway.internal:3000")
-  : "";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://backend.railway.internal:3000";
 
 // ---------------------------------------------------------------------------
 // Core helper
