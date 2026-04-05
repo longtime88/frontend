@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { login } from "@/lib/api";
 
 export default function Anmelden() {
   const [email, setEmail] = useState("");
@@ -17,7 +16,8 @@ export default function Anmelden() {
     setSubmitting(true);
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
       const res = await fetch(`${apiUrl}/api/login`, {
         method: "POST",
         headers: {
@@ -29,15 +29,17 @@ export default function Anmelden() {
       const data = await res.json();
 
       if (res.ok) {
+        setSuccess(true);
         setMessage("Login erfolgreich!");
         console.log("Token:", data.token);
-        // Token speichern (localStorage oder Cookie)
       } else {
         setMessage(data.error || "Login fehlgeschlagen");
       }
     } catch (err) {
       setMessage("Server nicht erreichbar");
-    } 
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
