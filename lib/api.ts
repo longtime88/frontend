@@ -1,13 +1,15 @@
 /**
  * API utility for communicating with the Symfony/FrankenPHP backend.
  *
- * All requests (both client-side and SSR) are sent directly to the backend
- * using the full internal Railway URL. This avoids CORS failures that occur
- * when the browser resolves a relative URL against the frontend's own origin.
+ * In production, NEXT_PUBLIC_BACKEND_URL is set via a Railway reference variable
+ * (${{backend.RAILWAY_PUBLIC_DOMAIN}}) and the backend is reached over its public
+ * HTTPS domain. In local development the variable is unset and requests fall back
+ * to http://localhost:3000.
  */
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://backend.railway.internal:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+  ? `https://${process.env.NEXT_PUBLIC_BACKEND_URL}`
+  : "http://localhost:3000";
 
 // ---------------------------------------------------------------------------
 // Core helper
