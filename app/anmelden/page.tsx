@@ -17,20 +17,26 @@ export default function Anmelden() {
     setSubmitting(true);
 
     try {
-      const data = await login(email, password);
-      localStorage.setItem("token", data.token);
-      setSuccess(true);
-      setMessage("Login erfolgreich!");
-      console.log("[Anmelden] Token gespeichert.");
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Login fehlgeschlagen";
-      console.error("[Anmelden] Login-Fehler:", err);
-      setSuccess(false);
-      setMessage(errorMessage);
-    } finally {
-      setSubmitting(false);
-    }
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage("Login erfolgreich!");
+        console.log("Token:", data.token);
+        // Token speichern (localStorage oder Cookie)
+      } else {
+        setMessage(data.error || "Login fehlgeschlagen");
+      }
+    } catch (err) {
+      setMessage("Server nicht erreichbar");
+    } 
   }
 
   return (
