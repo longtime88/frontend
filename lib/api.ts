@@ -1,10 +1,14 @@
 /**
  * API utility for communicating with the Symfony/FrankenPHP backend.
  *
- * In production, NEXT_PUBLIC_BACKEND_URL is set via a Railway reference variable
- * (${{backend.RAILWAY_PUBLIC_DOMAIN}}) and the backend is reached over its public
- * HTTPS domain. In local development the variable is unset and requests fall back
- * to http://localhost:3000.
+ * All requests (both client-side and SSR) are sent directly to the backend
+ * using the backend's public Railway domain. The internal Railway DNS
+ * (*.railway.internal) is not resolvable from the frontend container, so the
+ * public domain is used instead.
+ *
+ * Set NEXT_PUBLIC_BACKEND_URL on the frontend service to the backend's public
+ * domain, e.g. via the Railway reference variable:
+ *   NEXT_PUBLIC_BACKEND_URL=${{ backend.RAILWAY_PUBLIC_DOMAIN }}
  */
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL
