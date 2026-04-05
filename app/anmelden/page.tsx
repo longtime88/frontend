@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { login } from "@/lib/api";
 
 export default function Anmelden() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setMessage("");
+    setSuccess(false);
+    setSubmitting(true);
 
     try {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
@@ -66,13 +72,20 @@ export default function Anmelden() {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+          disabled={submitting}
+          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Einloggen
+          {submitting ? "Wird angemeldet…" : "Einloggen"}
         </button>
 
         {message && (
-          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
+          <p
+            className={`mt-4 text-center text-sm font-medium ${
+              success ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {message}
+          </p>
         )}
       </form>
     </div>
