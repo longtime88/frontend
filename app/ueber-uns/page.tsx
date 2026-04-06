@@ -6,7 +6,7 @@ import Link from "next/link"
 export default function Ueberuns() {
   return (
     <div className="min-h-screen bg-blue-600 text-white px-6 
-                    pt-32 md:pt-48 lg:pt-60  /* Abstand unter dem Header */
+                    pt-32 md:pt-48 lg:pt-30  /* Abstand unter dem Header */
                     flex flex-col items-center">
 
       {/* Titel */}
