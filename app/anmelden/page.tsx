@@ -1,6 +1,6 @@
 "use client";
 
-import { Analytics } from "@vercel/analytics/nuxt/runtime";
+import { Analytics } from "@vercel/analytics/react";
 import { useState } from "react";
 
 export default function Anmelden() {
