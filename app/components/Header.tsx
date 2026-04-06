@@ -9,8 +9,15 @@ import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 
 export default function Header() {
   return (
-    
-        <header className="w-full  shadow px-6 py-2 flex flex-col gap-4 bg-blue bg-blue-700 backdrop-blur-sm ">
+    <header
+      className="
+        w-full px-6 py-2 flex flex-col gap-4
+        fixed top-0 left-0 z-50
+        bg-linear-to-b from-white/70 via-white/30 to-blue-500/20
+        backdrop-blur-md
+        shadow-lg
+      "
+    >
       <div className="text-center">
         <h1 className="text-3xl font-bold text-white/80 select-none">
           Luna&Clean
@@ -18,7 +25,7 @@ export default function Header() {
         </h1>
       </div>
 
-      <div className="flex items-center justify-between w-full">
+      <div className="flex items-center justify-between ">
         <form action="#" method="get" className="flex items-center w-1/3 bg-gray-400">
           <input
             type="text"
@@ -30,11 +37,11 @@ export default function Header() {
           <button
             type="submit"
             className="px-4 py-2 bg-gray-500 border border-gray-300 border-l-0 
-                       rounded-r-md hover:bg-gray-300 md:px-6 transition text-white flex items-center rounded-lg backdrop-blur-sm">
+                       rounded-r-md hover:bg-gray-300 md:px-6 transition text-white flex items-center rounded-lg backdrop-blur-sm ">
             <SearchIcon fontSize="small" />
           </button>
         </form>
-        <nav>
+        <nav className="flex items-center gap-4">
           <ul className="flex flex-col gap-2 mt-4 md:flex-row md:gap-6 md:mt-0 items-start">
             <li><Link href="/" className="flex items-center gap-2"><HomeIcon fontSize="small" /> Home</Link></li>
             <li><Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link></li>
@@ -43,7 +50,12 @@ export default function Header() {
             <li><Link href="/Warenkorb" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" /> Basket</Link></li>
           </ul>
         </nav>
+
+        
       </div>
     </header>
-  )
+
+  );
 }
+
+

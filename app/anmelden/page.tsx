@@ -43,8 +43,8 @@ export default function Anmelden() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center mt-10 px-4">
-      <h1 className="text-3xl font-bold mb-6">Anmelden</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-blue-600">
+      <h1 className="text-3xl font-bold mb-6 text-white">Anmelden</h1>
 
       <form
         onSubmit={handleSubmit}
@@ -89,6 +89,16 @@ export default function Anmelden() {
             {message}
           </p>
         )}
+
+        {/* Registrieren-Link */}
+        <div className="mt-4 text-center">
+          <p className="text-sm">
+            Noch keinen Account?{" "}
+            <a href="/register" className="text-blue-600 hover:underline">
+              Registrieren
+            </a>
+          </p>
+        </div>
       </form>
     </div>
   );

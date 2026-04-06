@@ -1,53 +1,48 @@
 import Image from "next/image";
 import Category from "./components/Category";
 import Hello from "./components/hello";
-import { Button } from "./components/Button";
 
-
-  
 export default function Homepage() {
   return (
-    <div>
-      <span>
-      <section className="relative w-full h-[calc(100vh-6rem)]">
-      <div className="relative w-full h-full">
-            
-      <Image
-        src="/images/Hintergrund.png"
+    <section className="relative w-full min-h-screen">
+
+      {/* Hintergrundbild */}
+      <div className="absolute inset-0 -z-10">
+        <Image
+          src="/images/Hintergrund.png"
           alt="Hintergrund"
           fill
-          className="object-cover absolute"
-          loading="eager"
-              priority
-      />
-      
-      <div className="relative w-full h-full flex flex-col">
-        <nav className="pt-6 flex justify-center z-20 relative">
-          <Category />    
-        </nav>
-        
-        <div className="mt-8"></div>
-        
-        <div className="flex justify-center z-20 relative">
-                <Hello />
-              </div>
-             
-               
-            </div>  
-        </div>
-        
-          
-      </section>
+          className="object-cover"
+          priority
+        />
+      </div>
 
-      </span>
-    </div>
+      {/* Inhalt */}
+      <div className="
+        relative z-10 
+        w-full min-h-screen 
+        flex flex-col 
+        items-center 
+        justify-start 
+        gap-12 
+        px-4 
+
+        pt-60     /* Mobile */
+        md:pt-48  /* Tablet */
+        lg:pt-30  /* Desktop */
+      ">
+        
+        {/* Category oben, zentriert */}
+        <div className="w-full flex justify-center">
+          <Category />
+        </div>
+
+        {/* Produkte darunter */}
+        <div className="w-full flex justify-center">
+          <Hello />
+        </div>
+
+      </div>
+    </section>
   );
 }
-
-
-
-
-
-    
-  
-
