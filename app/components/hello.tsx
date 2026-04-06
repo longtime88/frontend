@@ -20,7 +20,7 @@ export default function Hello() {
           href="/Warenkorb"
           className="w-full bg-black text-white py-3 rounded-lg text-center font-semibold hover:bg-gray-800 transition"
         >
-          Jetzt bestellen
+          Jetzt bestellen jetzt
         </a>
        
         </div>
