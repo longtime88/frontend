@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Category from "./components/Category";
 import Hello from "./components/hello";
+import { Button } from "./components/Button";
+
 
   
 export default function Homepage() {
@@ -27,13 +29,16 @@ export default function Homepage() {
         <div className="mt-8"></div>
         
         <div className="flex justify-center z-20 relative">
-          <Hello />
+                <Hello />
+              </div>
+             
+               
+            </div>  
         </div>
-      </div>
-            
-          </div>
+        
           
       </section>
+
       </span>
     </div>
   );

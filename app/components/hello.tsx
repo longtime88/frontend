@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { getHello } from '@/lib/api';
+import { Button } from './Button';
 
 export default function Hello() {
   const [backendMessage, setBackendMessage] = useState<string | null>(null);
@@ -42,22 +43,47 @@ export default function Hello() {
       </div>
 
       {/* Product images */}
-      <div className="flex flex-row gap-6 justify-center items-center">
-        <div className="rounded-lg px-6 py-4 text-center">
-          <Image src="/images/Roggenbrot.jpg"
-            alt="Roggenbrot" width={150} height={150}
-            className="rounded-lg" />
-        </div>
+   
 
         <div className="rounded-lg px-6 py-4 text-center">
           <Image src="/images/Weisßbrot.png"
             alt="Weizenbrot" width={150} height={150}
-            className="rounded-lg" />
+            className="rounded-lg"
+           
+        />
+        <p className=" font-semibold text-gray-700 text-4xl">3,99 €</p>
+
+        <a
+          href="/Warenkorb"
+          className="w-full bg-black text-white py-3 rounded-lg text-center font-semibold hover:bg-gray-800 transition"
+        >
+          Jetzt bestellen
+        </a>
+       
         </div>
+
+        <div className="rounded-lg px-6 py-4 text-center">
+          <Image src="/images/Roggenbrot.jpg"
+            alt="Roggenbrot" width={150} height={150}
+            className="rounded-lg"
+           
+        />
+        <p className=" font-semibold text-gray-700 text-4xl">5,99 €</p>
+
+        <a
+          href="/Warenkorb"
+          className="w-full bg-black text-white py-3 rounded-lg text-center font-semibold hover:bg-gray-800 transition"
+        >
+          Jetzt bestellen
+        </a>
+        
+       
+
       </div>
     </div>
   );
 }
+
 
 
     

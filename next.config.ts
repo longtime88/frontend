@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://backend.railway.internal:3000";
+  process.env.NEXT_PUBLIC_API_URL ?? "http://backend.railway.internal:8000";
 
 const nextConfig: NextConfig = {
   /**
