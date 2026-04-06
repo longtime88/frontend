@@ -1,5 +1,6 @@
 "use client";
 
+import { Analytics } from "@vercel/analytics/nuxt/runtime";
 import { useState } from "react";
 
 export default function Anmelden() {
@@ -96,10 +97,12 @@ export default function Anmelden() {
             Noch keinen Account?{" "}
             <a href="/register" className="text-blue-600 hover:underline">
               Registrieren
+              
             </a>
           </p>
         </div>
       </form>
+      <Analytics />
     </div>
   );
 }
