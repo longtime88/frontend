@@ -2,6 +2,7 @@ import Image from "next/image";
 import Category from "./components/Category";
 import Hello from "./components/hello";
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 export default function Homepage() {
   return (
     <section className="relative w-full min-h-screen">
@@ -41,7 +42,8 @@ export default function Homepage() {
         <div className="w-full flex justify-center">
           <Hello />
         </div>
-      <Analytics />
+        <Analytics />
+        <SpeedInsights/>
       </div>
     </section>
   );

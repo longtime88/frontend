@@ -1,5 +1,5 @@
 'use client'
-
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -62,6 +62,7 @@ export default function Ueberuns() {
           >
             Zurück zur Startseite
           </Link>
+          <SpeedInsights/>
         </div>
       </div>
     </div>

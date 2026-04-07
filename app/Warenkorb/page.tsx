@@ -3,6 +3,8 @@ import type { AppProps } from 'next/app';
 import CartLayout from "../components/CartLayout"
 import { Analytics } from '@vercel/analytics/next';
 import Image from "next/image";
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 
 
 export default function Basket () {
@@ -27,6 +29,7 @@ export default function Basket () {
           </div>
           </main>
         <Analytics />
+        <SpeedInsights/>
       </div>
     </div>
     

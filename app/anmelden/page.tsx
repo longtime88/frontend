@@ -2,6 +2,7 @@
 
 import { Analytics } from "@vercel/analytics/react";
 import { useState } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export default function Anmelden() {
   const [email, setEmail] = useState("");
@@ -103,6 +104,7 @@ export default function Anmelden() {
         </div>
       </form>
       <Analytics />
+      <SpeedInsights/>
     </div>
   );
 }
