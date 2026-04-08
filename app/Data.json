@@ -1,0 +1,30 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "title": "Sorgenbrecht",
+      "description": "The Essence Mascara Lash Princess is a popular mascara known for its volumizing and lengthening effects. Achieve dramatic lashes with this long-lasting and cruelty-free formula.",
+      "category": "beauty",
+      "price": 9.99,
+      "image": "images/Weisßbrot.png"
+    },
+    {
+      "id": 2,
+      "title": "Fürsogleich",
+      "description": "Luna&Clean All-Purpose Cleaner is a powerful and eco-friendly cleaning solution that effectively removes dirt and grime from various surfaces. Safe for use in kitchens, bathrooms, and more.",
+      "category": "cleaning",
+      "price": 14.99,
+      "image": "images/Roggenbrot.jpg"
+      
+    },
+    {
+      "id": 3,
+      "title": "Luna&Clean Dish Soap",
+      "description": "Luna&Clean Dish Soap is a gentle yet effective dishwashing liquid that cuts through grease and leaves your dishes sparkling clean. Made with natural ingredients and free from harsh chemicals.",
+      "category": "cleaning",
+      "price": 7.99
+
+      
+    }
+  ]
+}

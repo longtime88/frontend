@@ -4,7 +4,9 @@ import CartLayout from "../components/CartLayout"
 import { Analytics } from '@vercel/analytics/next';
 import Image from "next/image";
 import { SpeedInsights } from "@vercel/speed-insights/next"
-
+import { useState } from 'react';
+import Data from "../Data.json"
+import { Product } from '../components/Product';
 
 
 export default function Basket () {
@@ -24,12 +26,16 @@ export default function Basket () {
     <div className="relative w-full h-full flex items-center justify-center">
           <CartLayout>
             <h2 className="text-2xl font-bold mb-4">Dein Warenkorb ist leer!</h2>
-            <p className="text-gray-300">Füge Produkte hinzu, um sie hier zu sehen.</p>
+              <p className="text-gray-300">Füge Produkte hinzu, um sie hier zu sehen.</p>
+          
           </CartLayout>
           </div>
-          </main>
-        <Analytics />
-        <SpeedInsights/>
+           <Analytics />
+        <SpeedInsights/> 
+        </main>
+        
+     
+       
       </div>
     </div>
     

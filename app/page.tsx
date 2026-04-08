@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Category from "./components/Category";
-import Hello from "./components/hello";
+import Hello, { Products } from "./components/hello";
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -46,6 +46,7 @@ export default function Homepage() {
       <div className="w-full max-w-6xl mx-auto py-20 px-4">
         <h2 className="text-3xl font-bold text-center mb-10">Unsere Bestseller</h2>
         <Hello />
+       
       </div>
 
       {/* VORTEILE SEKTION */}

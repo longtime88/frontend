@@ -19,7 +19,7 @@ export default function Header() {
 
       {/* Logo */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-transparent bg-clip-text select-none px-4 py-2">
+        <h1 className="text-3xl font-bold bg-linear-to-r from-blue-500 to-purple-500 text-transparent bg-clip-text select-none px-4 py-2">
           Luna&Clean
           <span className="relative top-[-0.4em] text-xs ml-1">®</span>
         </h1>
@@ -51,7 +51,7 @@ export default function Header() {
         <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
         <Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link>
         <Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link>
-        <Link href="/Warenkorb" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" /> Basket</Link>
+        <Link href="/Warenkorb" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" />Basket</Link>
       </nav>
 
       {/* Mobile Menü Button */}
@@ -88,7 +88,7 @@ export default function Header() {
           <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
           <Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link>
           <Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link>
-          <Link href="/Warenkorb" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" /> Basket</Link>
+          <Link href="/Warenkorb" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small"/>0</Link>
         </div>
       )}
     </header>
