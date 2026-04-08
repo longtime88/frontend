@@ -3,6 +3,7 @@
 import React from 'react'
 import Data from "../Data.json"
 import Image from 'next/image'
+import CheckoutPage from '../Checkout/page';
 
 
  export const Product = ({product}:any) => {
@@ -12,7 +13,7 @@ import Image from 'next/image'
       <div className='card-body'>
         <h5 className='card-title'>{product.name}</h5>
         <p className='card-text'>{product.price} €</p>
-        <a href={`/Warenkorb/${product.id}`} className='btn btn-primary'>In den Warenkorb</a>
+        <a href={`/Checkout/page?productId=${product.id}`} className='btn btn-primary'>In den Warenkorb</a>
         
       </div>
     </div>

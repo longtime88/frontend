@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Product } from '../components/Product';
 import { useState } from 'react';
 import Data from "../Data.json"
+import CheckoutPage from '../Checkout/page';
 
 export  const Products = () => {
   const [products, setProducts] = useState(Data.products);
@@ -11,9 +12,11 @@ export  const Products = () => {
       {
         products.map(p => (
        
-        <Product product = {p} />
+          <Product product={p} />
+          
       ))
-     }
+      }
+      <CheckoutPage />
     </div>
   )
 }

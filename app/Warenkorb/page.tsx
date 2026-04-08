@@ -4,9 +4,7 @@ import CartLayout from "../components/CartLayout"
 import { Analytics } from '@vercel/analytics/next';
 import Image from "next/image";
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import { useState } from 'react';
-import Data from "../Data.json"
-import { Product } from '../components/Product';
+
 
 
 export default function Basket () {

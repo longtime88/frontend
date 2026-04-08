@@ -46,7 +46,7 @@ export default function Homepage() {
       <div className="w-full max-w-6xl mx-auto py-20 px-4">
         <h2 className="text-3xl font-bold text-center mb-10">Unsere Bestseller</h2>
         <Hello />
-       
+        <Products />
       </div>
 
       {/* VORTEILE SEKTION */}
@@ -83,7 +83,7 @@ export default function Homepage() {
           <span>✔ Nachhaltige Produkte</span>
         </div>
       </div>
-
+     
       <Analytics />
       <SpeedInsights />
     </section>
