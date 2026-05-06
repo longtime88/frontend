@@ -15,7 +15,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="w-full h-24 flex items-center justify-between px-6 bg-gray-800 text-white relative">
+    <header className="w-full h-24 flex items-center justify-between px-6 bg-gray-800 text-white relative z-50">
 
       {/* Logo */}
       <div className="text-center">
@@ -56,7 +56,11 @@ export default function Header() {
 
       {/* Mobile Menü Button */}
       <button
-        className="md:hidden text-white text-3xl"
+        type="button"
+        aria-label={open ? "Menue schliessen" : "Menue oeffnen"}
+        aria-expanded={open}
+        aria-controls="mobile-menu"
+        className="md:hidden text-white text-3xl absolute right-6 top-1/2 -translate-y-1/2 z-50"
         onClick={() => setOpen(!open)}
       >
         {open ? <CloseIcon /> : <MenuIcon />}
@@ -64,7 +68,10 @@ export default function Header() {
 
       {/* Mobile Menü */}
       {open && (
-        <div className="absolute top-24 left-0 w-full bg-gray-900/90 backdrop-blur-md p-6 flex flex-col gap-4 md:hidden">
+        <div
+          id="mobile-menu"
+          className="absolute top-full left-0 w-full bg-gray-900/90 backdrop-blur-md p-6 flex flex-col gap-4 md:hidden z-40"
+        >
 
           {/* Mobile Suchleiste */}
           <form action="#" method="get" className="flex items-center w-full">

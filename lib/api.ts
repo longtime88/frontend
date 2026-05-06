@@ -1,14 +1,11 @@
 /**
  * API utility for communicating with the Symfony/FrankenPHP backend.
  *
- * All requests (both client-side and SSR) are sent directly to the backend
- * using the backend's public Railway domain. The internal Railway DNS
- * (*.railway.internal) is not resolvable from the frontend container, so the
- * public domain is used instead.
+ * All requests (both client-side and SSR) are sent to the configured backend
+ * URL. If no backend URL is configured, requests fall back to localhost.
  *
- * Set NEXT_PUBLIC_BACKEND_URL on the frontend service to the backend's public
- * domain, e.g. via the Railway reference variable:
- *   NEXT_PUBLIC_BACKEND_URL=${{ backend.RAILWAY_PUBLIC_DOMAIN }}
+ * Set NEXT_PUBLIC_BACKEND_URL to a host/domain (without protocol), e.g.:
+ *   NEXT_PUBLIC_BACKEND_URL=api.example.com
  */
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL
