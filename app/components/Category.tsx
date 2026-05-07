@@ -10,8 +10,8 @@ const categories = [
 ]; 
 
 export default function Category() {
-  const [openCategory, setOpenCategory] = useState(null);
-  const toggle = (id: any) => {
+  const [openCategory, setOpenCategory] = useState<number | null>(null);
+  const toggle = (id: number) => {
     setOpenCategory(openCategory === id ? null : id);
   };
  

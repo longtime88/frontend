@@ -6,13 +6,13 @@ import Data from "../Data.json"
 import CheckoutPage from '../Checkout/page';
 
 export  const Products = () => {
-  const [products, setProducts] = useState(Data.products);
+  const [products] = useState(Data.products);
   return (
     <div className='container'>
       {
         products.map(p => (
        
-          <Product product={p} />
+          <Product key={p.id} product={p} />
           
       ))
       }

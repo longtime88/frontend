@@ -90,7 +90,7 @@ function Card({ title, children }: { title: string; children?: React.ReactNode }
   );
 }
 
-function Input({ label, placeholder }: any) {
+function Input({ label, placeholder }: { label: string; placeholder: string }) {
   return (
     <label className="block">
       <span className="text-sm font-medium text-neutral-700">{label}</span>

@@ -1,10 +1,13 @@
-async function search() {
+export async function search() {
 
-    const query = document.getElementById('search-input').value;
+    const input = document.getElementById('search-input');
+    if (!input) return;
+    const query = input.value;
 
     const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
     const results = await response.json();
     const resultsContainer = document.getElementById('results');
+    if (!resultsContainer) return;
     resultsContainer.innerHTML = '';
 
     results.forEach(result => {

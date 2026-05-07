@@ -1,5 +1,7 @@
 "use client";
-import { useState } from "react";
+
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import HomeIcon from "@mui/icons-material/Home";
@@ -13,6 +15,15 @@ import CloseIcon from "@mui/icons-material/Close";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const router = useRouter();
+
+  function handleSearch(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    router.push(`/search?q=${encodeURIComponent(query)}`);
+  }
 
   return (
     <header className="w-full h-24 flex items-center justify-between px-6 bg-gray-800 text-white relative z-50">
@@ -25,13 +36,14 @@ export default function Header() {
         </h1>
       </div>
 
-      {/* Suchleiste – immer volle Breite */}
+      {/* Suchleiste */}
       <div className="flex-1 mx-4 hidden md:flex">
-        <form action="#" method="get" className="flex items-center w-full">
+        <form onSubmit={handleSearch} className="flex items-center w-full">
           <input
             type="text"
-            name="search"
             placeholder="Suche..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             className="grow px-3 py-2 border border-gray-600 rounded-l-md 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 w-full rounded-full"
           />
@@ -45,7 +57,7 @@ export default function Header() {
         </form>
       </div>
 
-      {/* Desktop Navigation */}
+      {/* Navigation */}
       <nav className="hidden md:flex items-center gap-6">
         <Link href="/" className="flex items-center gap-2"><HomeIcon fontSize="small" /> Home</Link>
         <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
@@ -72,13 +84,12 @@ export default function Header() {
           id="mobile-menu"
           className="absolute top-full left-0 w-full bg-gray-900/90 backdrop-blur-md p-6 flex flex-col gap-4 md:hidden z-40"
         >
-
-          {/* Mobile Suchleiste */}
-          <form action="#" method="get" className="flex items-center w-full">
+          <form onSubmit={handleSearch} className="flex items-center w-full">
             <input
               type="text"
-              name="search"
               placeholder="Suche..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               className="grow px-3 py-2 border border-gray-600 rounded-l-md 
                          focus:outline-none focus:ring-2 focus:ring-blue-500 w-full rounded-full"
             />
