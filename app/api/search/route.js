@@ -6,7 +6,7 @@ export async function GET(request) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'sw-access-key': process.env.SHOPWARE_ACCESS_KEY
+            'sw-access-key': 'SWSCYKJUT1BKVMTNA3NHOGV2AG'
         },
         body: JSON.stringify({
             search: q

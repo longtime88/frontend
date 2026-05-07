@@ -7,7 +7,10 @@ type SearchProduct = {
   id: string;
   name: string;
   price?: Array<{
-    gross?: number;
+  gross?: number;
+
+
+
   }>;
 };
 
