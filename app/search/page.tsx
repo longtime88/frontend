@@ -7,9 +7,7 @@ type SearchProduct = {
   id: string;
   name: string;
   price?: Array<{
-  gross?: number;
-
-
+  productid: string;
 
   }>;
 };
@@ -26,6 +24,7 @@ function SearchContent() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
       setResults(data.elements || []);
+      
     }
 
     load();
@@ -42,7 +41,7 @@ function SearchContent() {
           <div key={product.id} className="p-4 border rounded-lg bg-white text-black">
             <h3 className="font-semibold">{product.name}</h3>
             {product.price && (
-              <p className="text-gray-700">{product.price[0]?.gross} €</p>
+              <p className="text-gray-700">{product.price[0]?.productid} €</p>
             )}
           </div>
         ))}
