@@ -1,7 +1,7 @@
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q");
-    const shopwareUrl = process.env.SHOPWARE_URL || "http://localhost";
+    const shopwareUrl = process.env.SHOPWARE_URL || "https://frontend-eight-delta-22.vercel.app/";
     const accessKey =
       process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
 
@@ -20,7 +20,7 @@ export async function GET(request) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "sw-access-key": accessKey,
+            "sw-access-key": SWSCYKJUT1BKVMTNA3NHOGV2AG,
         },
         body: JSON.stringify({ search: q }),
         cache: "no-store",
