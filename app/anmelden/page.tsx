@@ -18,10 +18,8 @@ export default function Anmelden() {
     setSubmitting(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-      const res = await fetch(`${apiUrl}/api/login`, {
-        method: "Get",
+      const res = await fetch("/backend-api/login", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
