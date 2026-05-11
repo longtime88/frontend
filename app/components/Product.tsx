@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { SHOPWARE_CART_URL } from '@/lib/shopwareStorefront';
 
 type ProductItem = {
   id: number | string;
@@ -24,7 +25,7 @@ export const Product = ({ product }: { product: ProductItem }) => {
       <div className='card-body'>
         <h5 className='card-title'>{productName}</h5>
         <p className='card-text'>{product.price} â‚¬</p>
-        <a href={`/Checkout`} className='btn btn-primary'>In den Warenkorb</a>
+        <a href={SHOPWARE_CART_URL} className='btn btn-primary'>In den Warenkorb</a>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import { SHOPWARE_CART_URL } from "@/lib/shopwareStorefront";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
@@ -63,7 +64,7 @@ export default function Header() {
         <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
         <Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link>
         <Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link>
-        <Link href="/Checkout" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" />O</Link>
+        <Link href={SHOPWARE_CART_URL} className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" />O</Link>
       </nav>
 
       {/* Mobile Menü Button */}
@@ -106,7 +107,7 @@ export default function Header() {
           <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
           <Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link>
           <Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link>
-          <Link href="/Checkout" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small"/>Basket</Link>
+          <Link href={SHOPWARE_CART_URL} className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small"/>Basket</Link>
         </div>
       )}
     </header>
