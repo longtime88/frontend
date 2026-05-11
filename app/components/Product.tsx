@@ -24,7 +24,7 @@ export const Product = ({ product }: { product: ProductItem }) => {
       <div className='card-body'>
         <h5 className='card-title'>{productName}</h5>
         <p className='card-text'>{product.price} â‚¬</p>
-        <a href={`/Checkout/page?productId=${product.id}`} className='btn btn-primary'>In den Warenkorb</a>
+        <a href={`/Checkout`} className='btn btn-primary'>In den Warenkorb</a>
       </div>
     </div>
   );

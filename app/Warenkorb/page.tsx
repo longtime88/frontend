@@ -1,5 +1,5 @@
 'use client'
-import type { AppProps } from 'next/app';
+
 import CartLayout from "../components/CartLayout"
 import { Analytics } from '@vercel/analytics/next';
 import Image from "next/image";

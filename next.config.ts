@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
-const BACKEND_API_URL = process.env.BACKEND_API_URL ?? "http://localhost";
+const rawBackendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+const BACKEND_API_BASE = rawBackendApiUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
   /**
@@ -12,7 +13,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/backend-api/:path*",
-        destination: `${BACKEND_API_URL}/api/:path*`,
+        destination: `${BACKEND_API_BASE}/api/:path*`,
       },
     ];
   },

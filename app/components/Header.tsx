@@ -63,7 +63,7 @@ export default function Header() {
         <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
         <Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link>
         <Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link>
-        <Link href="/Warenkorb" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" />O</Link>
+        <Link href="/Checkout" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" />O</Link>
       </nav>
 
       {/* Mobile Menü Button */}
@@ -106,7 +106,7 @@ export default function Header() {
           <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
           <Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link>
           <Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link>
-          <Link href="/Warenkorb" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small"/>Basket</Link>
+          <Link href="/Checkout" className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small"/>Basket</Link>
         </div>
       )}
     </header>

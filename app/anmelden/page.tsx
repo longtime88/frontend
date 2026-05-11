@@ -35,7 +35,7 @@ export default function Anmelden() {
       } else {
         setMessage(data.error || "Login fehlgeschlagen");
       }
-    } catch (err) {
+    } catch {
       setMessage("Server nicht erreichbar");
     } finally {
       setSubmitting(false);
