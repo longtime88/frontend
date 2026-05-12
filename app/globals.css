@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  
+  --bg: #f7f4ef;
+  --surface: #fffdf9;
+  --surface-strong: #fff6eb;
+  --ink: #1b1a17;
+  --muted: #6a655d;
+  --line: #e7dccb;
+  --brand: #c7682e;
+  --brand-deep: #8f3f1c;
+  --accent: #007a78;
+  --shadow-soft: 0 12px 30px rgba(72, 44, 16, 0.12);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    
-    --foreground: #ededed;
-  }
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-fraunces);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at 15% -10%, #ffe9cb 0%, transparent 36%),
+    radial-gradient(circle at 90% 10%, #d4f2f2 0%, transparent 28%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-manrope), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand-title {
+  font-family: var(--font-fraunces), serif;
+  letter-spacing: 0.03em;
+}
+
+.glass-panel {
+  background: color-mix(in srgb, var(--surface) 84%, #ffffff 16%);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(6px);
+}
+
+.soft-grid {
+  background-image:
+    linear-gradient(to right, rgba(199, 104, 46, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(199, 104, 46, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.reveal-rise {
+  animation: reveal-rise 0.75s ease both;
+}
+
+.reveal-delay-1 {
+  animation-delay: 0.14s;
+}
+
+.reveal-delay-2 {
+  animation-delay: 0.24s;
+}
+
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    background:
+      radial-gradient(circle at 20% -10%, #ffe9cb 0%, transparent 40%),
+      var(--bg);
+  }
 }

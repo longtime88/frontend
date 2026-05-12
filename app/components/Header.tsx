@@ -24,90 +24,117 @@ export default function Header() {
     if (!query.trim()) return;
 
     router.push(`/search?q=${encodeURIComponent(query)}`);
+    setOpen(false);
   }
 
   return (
-    <header className="w-full h-24 flex items-center justify-between px-6 bg-gray-800 text-white relative z-50">
-
-      {/* Logo */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold bg-linear-to-r from-blue-500 to-purple-500 text-transparent bg-clip-text select-none px-4 py-2">
-          Luna&Clean
-          <span className="relative top-[-0.4em] text-xs ml-1">®</span>
-        </h1>
+    <header className="sticky top-0 z-50 border-b border-[#e7dccb] bg-[color:var(--surface)]/95 backdrop-blur-md">
+      <div className="soft-grid hidden h-8 items-center justify-center text-xs font-semibold tracking-[0.14em] text-[color:var(--brand-deep)] md:flex">
+        GRATIS VERSAND AB 39 € · KAUF AUF RECHNUNG · 24H SUPPORT
       </div>
 
-      {/* Suchleiste */}
-      <div className="flex-1 mx-4 hidden md:flex">
-        <form onSubmit={handleSearch} className="flex items-center w-full">
-          <input
-            type="text"
-            placeholder="Suche..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="grow px-3 py-2 border border-gray-600 rounded-l-md 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 w-full rounded-full"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-gray-500 border border-gray-300 
-                       rounded-r-md hover:bg-gray-300 transition text-white flex items-center rounded-lg backdrop-blur-sm"
-          >
-            <SearchIcon fontSize="small" />
-          </button>
-        </form>
-      </div>
+      <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 md:px-6">
+        <Link href="/" className="group shrink-0">
+          <p className="brand-title text-2xl font-bold text-[color:var(--ink)] transition group-hover:text-[color:var(--brand)]">
+            Luna&Clean
+          </p>
+          <p className="text-[10px] font-semibold tracking-[0.18em] text-[color:var(--muted)]">
+            HOME CARE SHOP
+          </p>
+        </Link>
 
-      {/* Navigation */}
-      <nav className="hidden md:flex items-center gap-6">
-        <Link href="/" className="flex items-center gap-2"><HomeIcon fontSize="small" /> Home</Link>
-        <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
-        <Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link>
-        <Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link>
-        <Link href={SHOPWARE_CART_URL} className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small" />O</Link>
-      </nav>
-
-      {/* Mobile Menü Button */}
-      <button
-        type="button"
-        aria-label={open ? "Menue schliessen" : "Menue oeffnen"}
-        aria-expanded={open}
-        aria-controls="mobile-menu"
-        className="md:hidden text-white text-3xl absolute right-6 top-1/2 -translate-y-1/2 z-50"
-        onClick={() => setOpen(!open)}
-      >
-        {open ? <CloseIcon /> : <MenuIcon />}
-      </button>
-
-      {/* Mobile Menü */}
-      {open && (
-        <div
-          id="mobile-menu"
-          className="absolute top-full left-0 w-full bg-gray-900/90 backdrop-blur-md p-6 flex flex-col gap-4 md:hidden z-40"
-        >
-          <form onSubmit={handleSearch} className="flex items-center w-full">
+        <form onSubmit={handleSearch} className="hidden flex-1 md:flex">
+          <div className="glass-panel flex w-full items-center rounded-full px-2 py-2">
             <input
               type="text"
-              placeholder="Suche..."
+              placeholder="Suche nach Produkten..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="grow px-3 py-2 border border-gray-600 rounded-l-md 
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 w-full rounded-full"
+              className="w-full bg-transparent px-4 text-sm text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]"
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-gray-500 border border-gray-300 
-                         rounded-r-md hover:bg-gray-300 transition text-white flex items-center rounded-lg backdrop-blur-sm"
+              className="rounded-full bg-[color:var(--brand)] p-2 text-white transition hover:bg-[color:var(--brand-deep)]"
+              aria-label="Suche starten"
             >
               <SearchIcon fontSize="small" />
             </button>
+          </div>
+        </form>
+
+        <nav className="hidden items-center gap-5 text-sm font-semibold text-[color:var(--muted)] md:flex">
+          <Link href="/" className="flex items-center gap-1.5 hover:text-[color:var(--brand)]">
+            <HomeIcon fontSize="small" /> Start
+          </Link>
+          <Link href="/ueber-uns" className="flex items-center gap-1.5 hover:text-[color:var(--brand)]">
+            <InfoIcon fontSize="small" /> Über uns
+          </Link>
+          <Link href="/kontakt" className="flex items-center gap-1.5 hover:text-[color:var(--brand)]">
+            <ContactMailIcon fontSize="small" /> Kontakt
+          </Link>
+          <Link href="/anmelden" className="flex items-center gap-1.5 hover:text-[color:var(--brand)]">
+            <LoginIcon fontSize="small" /> Konto
+          </Link>
+          <Link
+            href={SHOPWARE_CART_URL}
+            className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-[color:var(--ink)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+          >
+            <span className="flex items-center gap-2">
+              <ShoppingBasketIcon fontSize="small" /> Warenkorb
+            </span>
+          </Link>
+        </nav>
+
+        <button
+          type="button"
+          aria-label={open ? "Menü schließen" : "Menü öffnen"}
+          aria-expanded={open}
+          aria-controls="mobile-menu"
+          className="ml-auto rounded-full border border-[color:var(--line)] bg-white p-2 text-[color:var(--ink)] md:hidden"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <CloseIcon /> : <MenuIcon />}
+        </button>
+      </div>
+
+      {open && (
+        <div id="mobile-menu" className="border-t border-[color:var(--line)] bg-[color:var(--surface)] px-4 pb-5 pt-4 md:hidden">
+          <form onSubmit={handleSearch} className="mb-4">
+            <div className="glass-panel flex items-center rounded-full px-2 py-2">
+              <input
+                type="text"
+                placeholder="Suche nach Produkten..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full bg-transparent px-4 text-sm text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]"
+              />
+              <button
+                type="submit"
+                className="rounded-full bg-[color:var(--brand)] p-2 text-white"
+                aria-label="Suche starten"
+              >
+                <SearchIcon fontSize="small" />
+              </button>
+            </div>
           </form>
 
-          <Link href="/" className="flex items-center gap-2"><HomeIcon fontSize="small" /> Home</Link>
-          <Link href="/ueber-uns" className="flex items-center gap-2"><InfoIcon fontSize="small" /> Über uns</Link>
-          <Link href="/kontakt" className="flex items-center gap-2"><ContactMailIcon fontSize="small" /> Kontakt</Link>
-          <Link href="/anmelden" className="flex items-center gap-2"><LoginIcon fontSize="small" /> Anmelden</Link>
-          <Link href={SHOPWARE_CART_URL} className="flex items-center gap-2"><ShoppingBasketIcon fontSize="small"/>Basket</Link>
+          <nav className="flex flex-col gap-3 text-sm font-semibold text-[color:var(--muted)]">
+            <Link href="/" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#fff3e6]">
+              <HomeIcon fontSize="small" /> Start
+            </Link>
+            <Link href="/ueber-uns" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#fff3e6]">
+              <InfoIcon fontSize="small" /> Über uns
+            </Link>
+            <Link href="/kontakt" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#fff3e6]">
+              <ContactMailIcon fontSize="small" /> Kontakt
+            </Link>
+            <Link href="/anmelden" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#fff3e6]">
+              <LoginIcon fontSize="small" /> Konto
+            </Link>
+            <Link href={SHOPWARE_CART_URL} className="flex items-center gap-2 rounded-xl bg-[color:var(--brand)] px-3 py-3 text-white">
+              <ShoppingBasketIcon fontSize="small" /> Zum Warenkorb
+            </Link>
+          </nav>
         </div>
       )}
     </header>

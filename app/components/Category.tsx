@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 const categories = [
-  { id: 1, name: "Brote",products: ["Weizenbrot","Roggenbrot",] },
-  { id: 2, name: "Süßbackwaren", products: ["Krapfen", "Schokocroissant"] },
-  { id: 3, name: "Küchenwerkzeug", products:["Küchenmaschine","Küchenmesser"] },
-  { id: 4, name: "Weine", products:["Rotwein","Weißwein"] }
+  { id: 1, name: "Küche", products: ["Fettlöser", "Spülreiniger", "Mikrofaser-Tücher"] },
+  { id: 2, name: "Bad", products: ["Kalklöser", "Glasreiniger", "Schimmel-Stop"] },
+  { id: 3, name: "Bodenpflege", products: ["Holzpflege", "Fliesenreiniger", "Duftkonzentrate"] },
+  { id: 4, name: "Nachhaltig", products: ["Refill-Packs", "Bambus-Bürsten", "Öko-Schwämme"] }
 ]; 
 
 export default function Category() {
@@ -15,30 +15,36 @@ export default function Category() {
     setOpenCategory(openCategory === id ? null : id);
   };
  
-  return ( 
-    <nav>
-      <div className="relative z-10 w-full h-full flex items-center justify-center px-6">
-        <div className="text-center text-white">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {categories.map((cat) => (
-              <div 
-                key={cat.id} 
-                onClick={() => toggle(cat.id)}
-                className="bg-blue-950 p-4 rounded-lg cursor-pointer hover:bg-black/70 transition"
-              >
+  return (
+    <nav className="reveal-rise reveal-delay-1">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {categories.map((cat) => {
+          const isOpen = openCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => toggle(cat.id)}
+              className="glass-panel group rounded-2xl px-5 py-4 text-left transition hover:-translate-y-0.5 hover:border-[color:var(--brand)]"
+            >
+              <p className="brand-title text-lg font-semibold text-[color:var(--ink)]">
                 {cat.name}
-                {openCategory === cat.id && (
-                  <ul className="mt-2 text-shadow-mauve-500 gab-4">
-                    {cat.products.map((p, i) => (
-                      <li key={i}>• {p}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>  
+              </p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
+                Produktlinie
+              </p>
+
+              {isOpen && (
+                <ul className="mt-4 space-y-1 text-sm text-[color:var(--muted)]">
+                  {cat.products.map((p) => (
+                    <li key={p}>• {p}</li>
+                  ))}
+                </ul>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }
