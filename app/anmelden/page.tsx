@@ -1,8 +1,9 @@
 "use client";
 
-import { Analytics } from "@vercel/analytics/react";
 import { useState } from "react";
+import Link from "next/link";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import type { FormEvent } from "react";
 
 export default function Anmelden() {
   const [email, setEmail] = useState("");
@@ -11,7 +12,7 @@ export default function Anmelden() {
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setMessage("");
     setSuccess(false);
@@ -43,66 +44,75 @@ export default function Anmelden() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-blue-600">
-      <h1 className="text-3xl font-bold mb-6 text-white">Anmelden</h1>
+    <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <div className="grid gap-6 md:grid-cols-[1.05fr,0.95fr]">
+        <div className="glass-panel reveal-rise rounded-3xl p-7 md:p-10">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Konto</p>
+          <h1 className="brand-title mt-2 text-3xl font-bold text-[color:var(--ink)] md:text-5xl">Anmelden</h1>
+          <p className="mt-4 text-sm text-[color:var(--muted)] md:text-base">
+            Melde dich an, um Kundenbereiche, Käufe und digitale Downloads zentral zu verwalten.
+          </p>
 
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-white text-black p-6 rounded-lg shadow-lg"
-      >
-        <div className="mb-4">
-          <label className="block mb-1 font-medium">E-Mail</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Deine E-Mail"
-          />
+          <ul className="mt-8 space-y-3 text-sm text-[color:var(--muted)]">
+            <li>• Zugriff auf deine Bestellungen und Rechnungen</li>
+            <li>• Schnellere Checkout-Prozesse</li>
+            <li>• Zugang zu exklusiven Portfolio-Ressourcen</li>
+          </ul>
         </div>
 
-        <div className="mb-4">
-          <label className="block mb-1 font-medium">Passwort</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Dein Passwort"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+        <form
+          onSubmit={handleSubmit}
+          className="glass-panel reveal-rise reveal-delay-1 w-full rounded-3xl p-6 md:p-8"
         >
-          {submitting ? "Wird angemeldet…" : "Einloggen"}
-        </button>
+          <div className="mb-4">
+            <label className="mb-1 block text-sm font-semibold text-[color:var(--ink)]">E-Mail</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)]"
+              placeholder="deine@email.de"
+            />
+          </div>
 
-        {message && (
-          <p
-            className={`mt-4 text-center text-sm font-medium ${
-              success ? "text-green-600" : "text-red-600"
-            }`}
+          <div className="mb-4">
+            <label className="mb-1 block text-sm font-semibold text-[color:var(--ink)]">Passwort</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)]"
+              placeholder="Dein Passwort"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="mt-2 w-full rounded-xl bg-[color:var(--brand)] py-3 text-sm font-bold text-white transition hover:bg-[color:var(--brand-deep)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {message}
-          </p>
-        )}
+            {submitting ? "Wird angemeldet..." : "Einloggen"}
+          </button>
 
-        {/* Registrieren-Link */}
-        <div className="mt-4 text-center">
-          <p className="text-sm">
+          {message && (
+            <p
+              className={`mt-4 text-center text-sm font-medium ${
+                success ? "text-emerald-600" : "text-rose-600"
+              }`}
+            >
+              {message}
+            </p>
+          )}
+
+          <div className="mt-5 text-center text-sm text-[color:var(--muted)]">
             Noch keinen Account?{" "}
-            <a href="/register" className="text-blue-600 hover:underline">
-              Registrieren
-              
-            </a>
-          </p>
-        </div>
-      </form>
-      <Analytics />
+            <Link href="/kontakt" className="font-semibold text-[color:var(--brand)] hover:underline">
+              Anfrage senden
+            </Link>
+          </div>
+        </form>
+      </div>
       <SpeedInsights/>
-    </div>
+    </section>
   );
 }

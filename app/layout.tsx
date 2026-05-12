@@ -19,8 +19,8 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Luna & Clean Shop",
-  description: "Reinigungsprodukte im modernen Storefront-Design",
+  title: "DevPortfolio Shop",
+  description: "Portfolio und digitaler Produktverkauf für Webentwicklung",
   manifest: "./app/manifest.json",
   
 };

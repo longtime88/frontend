@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 const categories = [
-  { id: 1, name: "Küche", products: ["Fettlöser", "Spülreiniger", "Mikrofaser-Tücher"] },
-  { id: 2, name: "Bad", products: ["Kalklöser", "Glasreiniger", "Schimmel-Stop"] },
-  { id: 3, name: "Bodenpflege", products: ["Holzpflege", "Fliesenreiniger", "Duftkonzentrate"] },
-  { id: 4, name: "Nachhaltig", products: ["Refill-Packs", "Bambus-Bürsten", "Öko-Schwämme"] }
+  { id: 1, name: "Shopware Plugins", products: ["Checkout Erweiterung", "Custom CMS Blocks", "B2B Features"] },
+  { id: 2, name: "Frontend Templates", products: ["Landingpage Kits", "Next.js Storefront UI", "Responsive Components"] },
+  { id: 3, name: "Automation", products: ["API Integrationen", "ERP Sync", "Lead Workflows"] },
+  { id: 4, name: "Mentoring", products: ["Code Review", "Pair Programming", "Tech Setup Sessions"] }
 ]; 
 
 export default function Category() {
@@ -31,7 +31,7 @@ export default function Category() {
                 {cat.name}
               </p>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                Produktlinie
+                Services & Produkte
               </p>
 
               {isOpen && (

@@ -5,66 +5,67 @@ import Link from "next/link"
 
 export default function Ueberuns() {
   return (
-    <div className="min-h-screen bg-blue-600 text-white px-6 
-                    pt-32 md:pt-48 lg:pt-30  /* Abstand unter dem Header */
-                    flex flex-col items-center">
-
-      {/* Titel */}
-      <h1 className="text-4xl font-bold mb-10 text-center">
-        Über uns – Verkauf & Handelsinformationen
-      </h1>
-
-      {/* Info-Box */}
-      <div className="bg-white text-black max-w-3xl w-full p-8 rounded-xl shadow-xl">
-        <h2 className="text-2xl font-semibold mb-4">Wer wir sind</h2>
-        <p className="mb-6">
-          Wir sind ein modernes Handelsunternehmen, spezialisiert auf hochwertige Backwaren,
-          regionale Produkte und zuverlässigen Kundenservice. Unser Ziel ist es, frische
-          Lebensmittel schnell, sicher und transparent anzubieten.
+    <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <div className="glass-panel reveal-rise rounded-3xl p-7 md:p-10">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Studio</p>
+        <h1 className="brand-title mt-2 text-3xl font-bold text-[color:var(--ink)] md:text-5xl">
+          Über mich
+        </h1>
+        <p className="mt-4 max-w-3xl text-sm text-[color:var(--muted)] md:text-base">
+          Ich entwickle performante Shop- und Portfolio-Lösungen mit Fokus auf Shopware, Next.js und skalierbare
+          Integrationen. Mein Ziel: Design, Technik und Conversion zusammenbringen.
         </p>
+      </div>
 
-        <h2 className="text-2xl font-semibold mb-4">Unsere Verkaufs- & Handelsinformationen</h2>
-        <ul className="list-disc ml-6 space-y-2">
-          <li>Transparente Preise und klare Produktinformationen</li>
-          <li>Regionale Lieferanten und nachhaltige Produktion</li>
-          <li>Schnelle Lieferung und sichere Bezahlmethoden</li>
-          <li>Faire Handelsbedingungen für Kunden & Partner</li>
-        </ul>
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <article className="glass-panel reveal-rise rounded-3xl p-6">
+          <h2 className="brand-title text-2xl font-semibold text-[color:var(--ink)]">Meine Arbeitsweise</h2>
+          <ul className="mt-4 space-y-2 text-sm text-[color:var(--muted)]">
+            <li>• Klare Architektur statt Schnellschuss-Lösungen</li>
+            <li>• Nutzerfokus: Seite soll verkaufen und verständlich sein</li>
+            <li>• Sauberer Code mit nachvollziehbarer Struktur</li>
+            <li>• Enge Zusammenarbeit und transparente Schritte</li>
+          </ul>
+        </article>
 
-        {/* Bilderbereich */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="rounded-lg overflow-hidden shadow-md">
-            <Image
-              src="/images/Weisßbrot.png"
-              alt="Weißbrot"
-              width={500}
-              height={300}
-              className="object-cover w-full h-48"
-            />
-          </div>
+        <article className="glass-panel reveal-rise reveal-delay-1 rounded-3xl p-6">
+          <h2 className="brand-title text-2xl font-semibold text-[color:var(--ink)]">Was Kunden bekommen</h2>
+          <ul className="mt-4 space-y-2 text-sm text-[color:var(--muted)]">
+            <li>• Individuelle Shopware Erweiterungen</li>
+            <li>• Portfolio- und Landingpage-Builds</li>
+            <li>• Checkout- und UX-Optimierung</li>
+            <li>• Wartbare Komponenten und Deployment-Setup</li>
+          </ul>
+        </article>
+      </div>
 
-          <div className="rounded-lg overflow-hidden shadow-md">
-            <Image
-              src="/images/Roggenbrot.jpg"
-              alt="Roggenbrot"
-              width={500}
-              height={300}
-              className="object-cover w-full h-48"
-            />
-          </div>
+      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="glass-panel overflow-hidden rounded-3xl p-3">
+          <Image
+            src="/images/Hintergrund.png"
+            alt="Projektansicht"
+            width={900}
+            height={520}
+            className="h-56 w-full rounded-2xl object-cover"
+          />
         </div>
-
-        {/* Link zurück */}
-        <div className="text-center mt-10">
-          <Link
-            href="/"
-            className="text-blue-600 font-semibold hover:underline"
-          >
-            Zurück zur Startseite
-          </Link>
-          <SpeedInsights/>
+        <div className="glass-panel overflow-hidden rounded-3xl p-3">
+          <Image
+            src="/images/Luna.jpg"
+            alt="Portfolio Preview"
+            width={900}
+            height={520}
+            className="h-56 w-full rounded-2xl object-cover"
+          />
         </div>
       </div>
-    </div>
+
+      <div className="mt-8 text-center">
+        <Link href="/" className="inline-flex rounded-full bg-[color:var(--brand)] px-6 py-3 text-sm font-bold text-white hover:bg-[color:var(--brand-deep)]">
+          Zurück zur Startseite
+        </Link>
+      </div>
+      <SpeedInsights/>
+    </section>
   )
 }

@@ -28,18 +28,18 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#e7dccb] bg-[color:var(--surface)]/95 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-[color:var(--line)] bg-[color:var(--surface)]">
       <div className="soft-grid hidden h-8 items-center justify-center text-xs font-semibold tracking-[0.14em] text-[color:var(--brand-deep)] md:flex">
-        GRATIS VERSAND AB 39 € · KAUF AUF RECHNUNG · 24H SUPPORT
+        WEBENTWICKLUNG · PORTFOLIO · DIGITALER SHOP
       </div>
 
       <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 md:px-6">
         <Link href="/" className="group shrink-0">
           <p className="brand-title text-2xl font-bold text-[color:var(--ink)] transition group-hover:text-[color:var(--brand)]">
-            Luna&Clean
+            DevPortfolio
           </p>
           <p className="text-[10px] font-semibold tracking-[0.18em] text-[color:var(--muted)]">
-            HOME CARE SHOP
+            WEB DEVELOPER STUDIO
           </p>
         </Link>
 
@@ -119,16 +119,16 @@ export default function Header() {
           </form>
 
           <nav className="flex flex-col gap-3 text-sm font-semibold text-[color:var(--muted)]">
-            <Link href="/" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#fff3e6]">
+            <Link href="/" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#eef4ff]">
               <HomeIcon fontSize="small" /> Start
             </Link>
-            <Link href="/ueber-uns" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#fff3e6]">
+            <Link href="/ueber-uns" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#eef4ff]">
               <InfoIcon fontSize="small" /> Über uns
             </Link>
-            <Link href="/kontakt" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#fff3e6]">
+            <Link href="/kontakt" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#eef4ff]">
               <ContactMailIcon fontSize="small" /> Kontakt
             </Link>
-            <Link href="/anmelden" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#fff3e6]">
+            <Link href="/anmelden" className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-[#eef4ff]">
               <LoginIcon fontSize="small" /> Konto
             </Link>
             <Link href={SHOPWARE_CART_URL} className="flex items-center gap-2 rounded-xl bg-[color:var(--brand)] px-3 py-3 text-white">

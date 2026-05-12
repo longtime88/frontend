@@ -68,7 +68,7 @@ export const Product = ({ product }: { product: ProductItem }) => {
           {productName}
         </h3>
         <p className='text-sm text-[color:var(--muted)]'>
-          Sanfte Reinigung mit hoher Wirksamkeit und frischem Duft.
+          Direkt einsetzbares Digital-Produkt für moderne Webprojekte.
         </p>
         <p className='text-2xl font-extrabold text-[color:var(--brand-deep)]'>
           {typeof product.price === "number" ? `${product.price.toFixed(2)} €` : "Preis auf Anfrage"}
