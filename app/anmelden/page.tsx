@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import type { FormEvent } from "react";
+import { SHOPWARE_ACCOUNT_REGISTER_URL } from "@/lib/shopwareStorefront";
 
 export default function Anmelden() {
   const [email, setEmail] = useState("");
@@ -105,9 +106,9 @@ export default function Anmelden() {
           )}
 
           <div className="mt-5 text-center text-sm text-[color:var(--muted)]">
-            Noch keinen Account?{" "}
-            <Link href="/kontakt" className="font-semibold text-[color:var(--brand)] hover:underline">
-              Anfrage senden
+            Noch keinen Shopware Account?{" "}
+            <Link href={SHOPWARE_ACCOUNT_REGISTER_URL} className="font-semibold text-[color:var(--brand)] hover:underline">
+              Shopware Account erstellen
             </Link>
           </div>
         </form>

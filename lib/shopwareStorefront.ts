@@ -5,4 +5,4 @@ const storefrontBaseUrl = rawStorefrontBaseUrl.replace(/\/+$/, "");
 
 export const SHOPWARE_CART_URL = `${storefrontBaseUrl}/checkout/cart`;
 export const SHOPWARE_CONFIRM_URL = `${storefrontBaseUrl}/checkout/confirm`;
-
+export const SHOPWARE_ACCOUNT_REGISTER_URL = `${storefrontBaseUrl}/account/login#register`;
