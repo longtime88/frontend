@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import { useState } from 'react';
-import { SHOPWARE_CART_URL } from '@/lib/shopwareStorefront';
 import { addProductToShopwareCart, resolveShopwareProductId } from '@/lib/shopwareCart';
 
 type ProductItem = {
@@ -15,34 +14,39 @@ type ProductItem = {
   
 };
 
-export const Product = ({ product }: { product: ProductItem }) => {
-  const [isAdding, setIsAdding] = useState(false);
 
-  const productName = product.name ?? product.title ?? "Produkt";
+type ProductProps = {
+  product: ProductItem;
+};
+
+export const Product: React.FC<ProductProps> = ({ product }) => {
+  const [isAdding, setIsAdding] = useState(false);
+  const productName = product.name || product.title || "Unbenanntes Produkt";
   const productImage = product.image
     ? product.image.startsWith("/")
       ? product.image
       : `/${product.image}`
     : "/next.svg";
-  const productId = resolveShopwareProductId(product.id, product.shopwareProductId);
 
   const handleAddToCart = async () => {
-    if (!productId) {
+    if (isAdding) return;
+
+    const shopwareProductId = resolveShopwareProductId(product.id, product.shopwareProductId);
+    if (!shopwareProductId) {
       alert(
-        "Dieses Produkt hat noch keine Shopware-Produkt-ID (32-stellige Hex-ID). " +
-        "Lege in den Produktdaten `shopwareProductId` an."
+        "Dieses Produkt hat keine gueltige Shopware-Produkt-ID. " +
+          "Bitte in den Produktdaten `shopwareProductId` (32-stellige Hex-ID) hinterlegen."
       );
       return;
     }
 
     setIsAdding(true);
     try {
-      await addProductToShopwareCart(productId, 1);
-      window.location.href = SHOPWARE_CART_URL;
+      await addProductToShopwareCart(shopwareProductId, 1);
+      alert(`${productName} wurde zum Warenkorb hinzugefügt!`);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Produkt konnte nicht in den Warenkorb gelegt werden.";
-      alert(message);
+      console.error("Fehler beim Hinzufügen zum Warenkorb:", error);
+      alert("Fehler beim Hinzufügen zum Warenkorb. Bitte versuche es erneut.");
     } finally {
       setIsAdding(false);
     }

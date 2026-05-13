@@ -17,7 +17,8 @@ export async function GET(request) {
   }
 
   try {
-    const response = await fetch(`${shopwareBaseUrl}/store-api/search`, {
+    const searchUrl = `${shopwareBaseUrl}/store-api/search`;
+    const fetchOptions = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -25,7 +26,33 @@ export async function GET(request) {
       },
       body: JSON.stringify({ search: q }),
       cache: "no-store",
-    });
+    };
+
+    let response;
+    try {
+      response = await fetch(searchUrl, fetchOptions);
+    } catch (error) {
+      const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
+      if (!allowSelfSigned) {
+        throw error;
+      }
+
+      const fallbackUrl = searchUrl.startsWith("https://")
+        ? searchUrl
+        : searchUrl.replace(/^http:\/\//i, "https://");
+      const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      try {
+        response = await fetch(fallbackUrl, fetchOptions);
+      } finally {
+        if (previousTlsMode === undefined) {
+          delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+        } else {
+          process.env.NODE_TLS_REJECT_UNAUTHORIZED = previousTlsMode;
+        }
+      }
+    }
 
     const data = await response.json();
     return Response.json(data, { status: response.status });

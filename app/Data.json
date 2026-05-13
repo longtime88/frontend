@@ -24,7 +24,14 @@
       "category": "mentoring",
       "price": 149.00
 
-      
+    },
+    {
+      "id": 4,
+      "title": "Shopware Checkout Starter Plugin",
+      "description": "Basis-Plugin mit Controller, Subscriber und Twig-Override als Startpunkt für Checkout-Anpassungen.",
+      "category": "plugin",
+      "price": 79.00,
+      "image": "images/Hintergrund.png"
     }
   ]
 }

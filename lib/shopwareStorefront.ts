@@ -1,5 +1,5 @@
 const rawStorefrontBaseUrl =
-  process.env.NEXT_PUBLIC_SHOPWARE_STOREFRONT_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_SHOPWARE_STOREFRONT_URL ?? "https://localhost:8000";
 
 const storefrontBaseUrl = rawStorefrontBaseUrl.replace(/\/+$/, "");
 
@@ -11,6 +11,6 @@ export const SHOPWARE_ACCOUNT_REGISTER_URL = `${storefrontBaseUrl}/account/login
 
 // Store-API Base URL (ohne /api Pfad)
 export function getShopwareApiBase(): string {
-  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "https://localhost:8000";
   return raw.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 }

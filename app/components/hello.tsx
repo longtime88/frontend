@@ -1,6 +1,6 @@
 'use client'
 
-import { Product } from '../components/Product';
+import { Product } from "./Product"
 import Data from "../Data.json"
 
 export  const Products = () => {
