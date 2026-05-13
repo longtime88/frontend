@@ -1,5 +1,8 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { SHOPWARE_CONFIRM_URL } from '@/lib/shopwareStorefront';
 
 interface CartLineItem {
   id: string;
@@ -121,7 +124,8 @@ export default function CheckoutPage() {
         localStorage.setItem('sw-context-token', data.contextToken);
       }
 
-      window.location.href = '/bestellung';
+      // Redirect to Shopware's order confirmation page
+      window.location.href = SHOPWARE_CONFIRM_URL;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Bestellung fehlgeschlagen.');
       setSubmitting(false);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-export async function POST(request) {
-  const rawShopwareUrl = process.env.SHOPWARE_URL || "https://localhost:8000";
+export async function POST(request: Request) {
+  const rawShopwareUrl = process.env.SHOPWARE_URL || "http://localhost:8000";
   const shopwareBaseUrl = rawShopwareUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
   const accessKey =
     process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
@@ -20,43 +20,45 @@ export async function POST(request) {
     return NextResponse.json({ error: "Ungueltiger JSON-Body." }, { status: 400 });
   }
 
-  const username = String(payload.username ?? "").trim();
-  const password = String(payload.password ?? "").trim();
+  const itemId = String(payload.itemId ?? "").trim();
+  const contextToken = String(payload.contextToken ?? "").trim();
 
-  if (!username || !password) {
+  if (!itemId) {
     return NextResponse.json(
-      { error: "Username und Passwort sind erforderlich." },
+      { error: "itemId ist erforderlich." },
       { status: 400 }
     );
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "sw-access-key": accessKey,
+  };
+
+  if (contextToken !== "") {
+    headers["sw-context-token"] = contextToken;
+  }
+
   try {
-    const loginUrl = `${shopwareBaseUrl}/store-api/account/login`;
-    const fetchOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "sw-access-key": accessKey,
-      },
-      body: JSON.stringify({
-        username,
-        password,
-      }),
+    const removeUrl = `${shopwareBaseUrl}/store-api/checkout/line-item?id=${encodeURIComponent(itemId)}`;
+    const fetchOptions: RequestInit = {
+      method: "DELETE",
+      headers,
       cache: "no-store",
     };
 
-    let upstream;
+    let upstream: Response;
     try {
-      upstream = await fetch(loginUrl, fetchOptions);
+      upstream = await fetch(removeUrl, fetchOptions);
     } catch (error) {
       const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
       if (!allowSelfSigned) {
         throw error;
       }
 
-      const fallbackUrl = loginUrl.startsWith("https://")
-        ? loginUrl
-        : loginUrl.replace(/^http:\/\//i, "https://");
+      const fallbackUrl = removeUrl.startsWith("https://")
+        ? removeUrl
+        : removeUrl.replace(/^http:\/\//i, "https://");
       const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
 
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -72,7 +74,7 @@ export async function POST(request) {
     }
 
     const data = await upstream.json().catch(() => ({}));
-    const contextToken =
+    const nextContextToken =
       upstream.headers.get("sw-context-token") ||
       (typeof data?.token === "string" ? data.token : "");
 
@@ -82,9 +84,9 @@ export async function POST(request) {
           error:
             data?.errors?.[0]?.detail ||
             data?.errors?.[0]?.title ||
-            "Login fehlgeschlagen.",
+            "Artikel konnte nicht entfernt werden.",
           details: data,
-          contextToken: contextToken || undefined,
+          contextToken: nextContextToken || undefined,
         },
         { status: upstream.status }
       );
@@ -92,12 +94,12 @@ export async function POST(request) {
 
     return NextResponse.json({
       ok: true,
-      customer: data.customer || null,
-      contextToken: contextToken || undefined,
+      cart: data,
+      contextToken: nextContextToken || undefined,
     });
   } catch {
     return NextResponse.json(
-      { error: "Shopware Login API ist nicht erreichbar." },
+      { error: "Shopware Cart API ist nicht erreichbar." },
       { status: 502 }
     );
   }

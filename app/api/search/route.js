@@ -1,7 +1,7 @@
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q");
-  const rawShopwareUrl = process.env.SHOPWARE_URL || "http://localhost:8000";
+  const rawShopwareUrl = process.env.SHOPWARE_URL || "https://localhost:8000";
   const shopwareBaseUrl = rawShopwareUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
   const accessKey = process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
 
