@@ -16,7 +16,7 @@ export default function Category() {
   };
  
   return (
-    <nav className="reveal-rise reveal-delay-1">
+    <nav>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {categories.map((cat) => {
           const isOpen = openCategory === cat.id;
@@ -25,11 +25,14 @@ export default function Category() {
               key={cat.id}
               type="button"
               onClick={() => toggle(cat.id)}
-              className="glass-panel group rounded-2xl px-5 py-4 text-left transition hover:-translate-y-0.5 hover:border-[color:var(--brand)]"
+              className="group rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] px-5 py-4 text-left shadow-[var(--shadow-soft)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)] hover:shadow-[0_16px_34px_rgba(86,45,19,0.14)]"
             >
-              <p className="brand-title text-lg font-semibold text-[color:var(--ink)]">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-lg font-semibold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
                 {cat.name}
-              </p>
+                </p>
+                <span className={`text-sm text-[color:var(--brand)] transition ${isOpen ? "rotate-45" : ""}`}>+</span>
+              </div>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
                 Services & Produkte
               </p>

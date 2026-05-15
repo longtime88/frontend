@@ -142,7 +142,7 @@ export default function CheckoutPage() {
   const total = subtotal + shippingCost;
 
   return (
-    <div className="min-h-screen bg-neutral-100 py-12">
+    <div className="min-h-screen bg-[color:var(--bg)] py-12">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {loading ? (
           <div className="text-center py-12">Laden...</div>
@@ -153,79 +153,83 @@ export default function CheckoutPage() {
             {/* LEFT */}
             <div className="space-y-8">
               {/* Lieferadresse */}
-              <section className="rounded-2xl bg-white p-8 shadow-sm border border-neutral-200">
-                <h2 className="text-lg font-medium tracking-tight mb-4">Lieferadresse</h2>
+              <section className="rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-8 shadow-[var(--shadow-soft)]">
+                <h2 className="mb-4 text-lg font-medium tracking-tight text-[color:var(--ink)]">Lieferadresse</h2>
                 <div className="grid gap-4">
                   <label className="block">
-                    <span className="text-sm font-medium text-neutral-700">Vorname</span>
+                    <span className="text-sm font-medium text-[color:var(--muted)]">Vorname</span>
                     <input
                       name="firstName"
                       value={shipping.firstName}
                       onChange={(e) => setShipping({ ...shipping, firstName: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-black focus:ring-0"
+                      className="mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium text-neutral-700">Nachname</span>
+                    <span className="text-sm font-medium text-[color:var(--muted)]">Nachname</span>
                     <input
                       name="lastName"
                       value={shipping.lastName}
                       onChange={(e) => setShipping({ ...shipping, lastName: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-black focus:ring-0"
+                      className="mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium text-neutral-700">Straße</span>
+                    <span className="text-sm font-medium text-[color:var(--muted)]">Straße</span>
                     <input
                       name="street"
                       value={shipping.street}
                       onChange={(e) => setShipping({ ...shipping, street: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-black focus:ring-0"
+                      className="mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium text-neutral-700">Stadt</span>
+                    <span className="text-sm font-medium text-[color:var(--muted)]">Stadt</span>
                     <input
                       name="city"
                       value={shipping.city}
                       onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-black focus:ring-0"
+                      className="mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium text-neutral-700">PLZ</span>
+                    <span className="text-sm font-medium text-[color:var(--muted)]">PLZ</span>
                     <input
                       name="zipcode"
                       value={shipping.zipcode}
                       onChange={(e) => setShipping({ ...shipping, zipcode: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-black focus:ring-0"
+                      className="mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
                     />
                   </label>
                 </div>
               </section>
 
               {/* Versandart */}
-              <section className="rounded-2xl bg-white p-8 shadow-sm border border-neutral-200">
-                <h2 className="text-lg font-medium tracking-tight mb-4">Versandart</h2>
+              <section className="rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-8 shadow-[var(--shadow-soft)]">
+                <h2 className="mb-4 text-lg font-medium tracking-tight text-[color:var(--ink)]">Versandart</h2>
                 <div className="space-y-2">
-                  <label className="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-neutral-50">
+                  <label className="cursor-pointer rounded-xl border border-[color:var(--line)] p-3 transition hover:bg-[#fff3e6]">
                     <input
                       type="radio"
                       name="shipping"
                       defaultChecked
                       className="h-4 w-4"
                     />
-                    <span className="text-sm font-medium">Standard</span>
+                    <span className="ml-3 text-sm font-medium text-[color:var(--ink)]">Standard</span>
                   </label>
                 </div>
               </section>
 
               {/* Zahlungsmethode */}
-              <section className="rounded-2xl bg-white p-8 shadow-sm border border-neutral-200">
-                <h2 className="text-lg font-medium tracking-tight mb-4">Zahlungsmethode</h2>
+              <section className="rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-8 shadow-[var(--shadow-soft)]">
+                <h2 className="mb-4 text-lg font-medium tracking-tight text-[color:var(--ink)]">Zahlungsmethode</h2>
                 <div className="space-y-2">
                   <label
-                    className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${paymentMethod === PAYMENT_METHOD_IDS.kreditkarte ? 'bg-neutral-50 border-black' : 'hover:bg-neutral-50'}`}
+                    className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition ${
+                      paymentMethod === PAYMENT_METHOD_IDS.kreditkarte
+                        ? 'border-[color:var(--brand)] bg-[#fff3e6]'
+                        : 'border-[color:var(--line)] hover:bg-[#fff9f1]'
+                    }`}
                     onClick={() => setPaymentMethod(PAYMENT_METHOD_IDS.kreditkarte)}
                   >
                     <div className="flex items-center gap-3">
@@ -251,7 +255,11 @@ export default function CheckoutPage() {
                     </div>
                   </label>
                   <label
-                    className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${paymentMethod === PAYMENT_METHOD_IDS.paypal ? 'bg-neutral-50 border-black' : 'hover:bg-neutral-50'}`}
+                    className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition ${
+                      paymentMethod === PAYMENT_METHOD_IDS.paypal
+                        ? 'border-[color:var(--brand)] bg-[#fff3e6]'
+                        : 'border-[color:var(--line)] hover:bg-[#fff9f1]'
+                    }`}
                     onClick={() => setPaymentMethod(PAYMENT_METHOD_IDS.paypal)}
                   >
                     <div className="flex items-center gap-3">
@@ -275,8 +283,8 @@ export default function CheckoutPage() {
 
             {/* RIGHT */}
             <aside className="space-y-6">
-              <section className="rounded-2xl bg-white p-8 shadow-sm border border-neutral-200">
-                <h2 className="text-lg font-medium tracking-tight mb-4">Bestellübersicht</h2>
+              <section className="rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-8 shadow-[var(--shadow-soft)]">
+                <h2 className="mb-4 text-lg font-medium tracking-tight text-[color:var(--ink)]">Bestellübersicht</h2>
                 <div className="grid gap-4">
                   {cart && Object.values(cart.lineItems).length > 0 ? (
                     <>
@@ -288,9 +296,9 @@ export default function CheckoutPage() {
                       ))}
                     </>
                   ) : (
-                    <p className="text-sm text-neutral-500">Keine Artikel im Warenkorb</p>
+                    <p className="text-sm text-[color:var(--muted)]">Keine Artikel im Warenkorb</p>
                   )}
-                  <div className="border-t pt-4 mt-2 space-y-2">
+                  <div className="mt-2 space-y-2 border-t border-[color:var(--line)] pt-4">
                     <div className="flex justify-between text-sm">
                       <span>Zwischensumme</span>
                       <span>{(subtotal / 100).toFixed(2)} €</span>
@@ -299,7 +307,7 @@ export default function CheckoutPage() {
                       <span>Versand</span>
                       <span>{shippingCost === 0 ? '0,00 €' : `${(shippingCost / 100).toFixed(2)} €`}</span>
                     </div>
-                    <div className="flex justify-between font-medium text-base pt-2 border-t">
+                    <div className="flex justify-between border-t border-[color:var(--line)] pt-2 text-base font-medium">
                       <span>Gesamt</span>
                       <span>{(total / 100).toFixed(2)} €</span>
                     </div>
@@ -316,7 +324,7 @@ export default function CheckoutPage() {
               <button
                 onClick={handleSubmit}
                 disabled={submitting || !cart || Object.values(cart.lineItems).length === 0}
-                className="w-full rounded-xl bg-black py-4 text-white text-sm font-medium tracking-wide transition-all hover:bg-neutral-900 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-black"
+                className="w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-4 text-sm font-medium tracking-wide text-white transition-all hover:from-[color:var(--brand-deep)] hover:to-[#c05d2b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submitting ? 'Wird verarbeitet...' : 'Bestellung abschließen'}
               </button>
@@ -324,8 +332,8 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-neutral-600 mb-4">Ihr Warenkorb ist leer.</p>
-            <Link href="/" className="text-black underline">Zurück zum Shop</Link>
+            <p className="mb-4 text-[color:var(--muted)]">Ihr Warenkorb ist leer.</p>
+            <Link href="/" className="text-[color:var(--brand)] underline">Zurück zum Shop</Link>
           </div>
         )}
       </div>

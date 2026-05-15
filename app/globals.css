@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f2f5fb;
-  --surface: #ffffff;
-  --surface-strong: #edf3ff;
-  --ink: #0f172a;
-  --muted: #475569;
-  --line: #d8e1f0;
-  --brand: #2563eb;
-  --brand-deep: #1d4ed8;
-  --accent: #0f766e;
-  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.12);
+  --bg: #f8f1e6;
+  --surface: #fffaf3;
+  --surface-strong: #ffe8d2;
+  --ink: #2d231c;
+  --muted: #7a6758;
+  --line: #e5ccb0;
+  --brand: #c96830;
+  --brand-deep: #a94f23;
+  --accent: #2f7764;
+  --shadow-soft: 0 14px 32px rgba(86, 45, 19, 0.14);
 }
 
 @theme inline {
@@ -22,8 +22,8 @@
 
 body {
   background:
-    radial-gradient(circle at 12% -12%, #cfddff 0%, transparent 35%),
-    radial-gradient(circle at 90% 8%, #d6fff2 0%, transparent 30%),
+    radial-gradient(circle at 12% -12%, #ffd9b5 0%, transparent 38%),
+    radial-gradient(circle at 90% 8%, #ffeac9 0%, transparent 34%),
     var(--bg);
   color: var(--ink);
   font-family: var(--font-manrope), sans-serif;
@@ -34,51 +34,10 @@ a {
   text-decoration: none;
 }
 
-.brand-title {
-  font-family: var(--font-fraunces), serif;
-  letter-spacing: 0.03em;
-}
-
-.glass-panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-soft);
-}
-
-.soft-grid {
-  background-image:
-    linear-gradient(to right, rgba(37, 99, 235, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(37, 99, 235, 0.07) 1px, transparent 1px);
-  background-size: 22px 22px;
-}
-
-.reveal-rise {
-  animation: reveal-rise 0.75s ease both;
-}
-
-.reveal-delay-1 {
-  animation-delay: 0.14s;
-}
-
-.reveal-delay-2 {
-  animation-delay: 0.24s;
-}
-
-@keyframes reveal-rise {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (max-width: 768px) {
   body {
     background:
-      radial-gradient(circle at 20% -10%, #cfddff 0%, transparent 40%),
+      radial-gradient(circle at 20% -10%, #ffd9b5 0%, transparent 42%),
       var(--bg);
   }
 }

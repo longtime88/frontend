@@ -11,11 +11,12 @@ export default function KontaktPage() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+    <section className="relative mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <div className="pointer-events-none absolute -right-8 top-10 h-56 w-56 rounded-full bg-[#ffd7b1]/45 blur-3xl" />
       <div className="grid gap-6 md:grid-cols-[1.05fr,0.95fr]">
-        <div className="glass-panel reveal-rise rounded-3xl p-7 md:p-10">
+        <div className="rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-7 shadow-[var(--shadow-soft)] transition duration-300 hover:-translate-y-1 md:p-10">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Kontakt</p>
-          <h1 className="brand-title mt-2 text-3xl font-bold text-[color:var(--ink)] md:text-5xl">
+          <h1 className="mt-2 text-3xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-5xl">
             Lass uns dein Projekt starten
           </h1>
           <p className="mt-4 text-sm text-[color:var(--muted)] md:text-base">
@@ -30,14 +31,14 @@ export default function KontaktPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="glass-panel reveal-rise reveal-delay-1 rounded-3xl p-6 md:p-8">
+        <form onSubmit={handleSubmit} className="rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-6 shadow-[var(--shadow-soft)] transition duration-300 hover:-translate-y-1 md:p-8">
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-semibold text-[color:var(--ink)]">Name</label>
               <input
                 required
                 type="text"
-                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)]"
+                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
                 placeholder="Max Mustermann"
               />
             </div>
@@ -47,7 +48,7 @@ export default function KontaktPage() {
               <input
                 required
                 type="email"
-                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)]"
+                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
                 placeholder="max@beispiel.de"
               />
             </div>
@@ -57,7 +58,7 @@ export default function KontaktPage() {
               <textarea
                 required
                 rows={5}
-                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)]"
+                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
                 placeholder="Was soll gebaut werden? Welche Deadline gibt es?"
               />
             </div>
@@ -65,7 +66,7 @@ export default function KontaktPage() {
 
           <button
             type="submit"
-            className="mt-5 w-full rounded-xl bg-[color:var(--brand)] py-3 text-sm font-bold text-white transition hover:bg-[color:var(--brand-deep)]"
+            className="mt-5 w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-3 text-sm font-bold text-white transition hover:from-[color:var(--brand-deep)] hover:to-[#c05d2b]"
           >
             Anfrage senden
           </button>
@@ -80,4 +81,3 @@ export default function KontaktPage() {
     </section>
   );
 }
-

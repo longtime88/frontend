@@ -58,10 +58,12 @@ function SearchContent() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 md:px-6">
-      <div className="glass-panel reveal-rise rounded-3xl p-6 md:p-8">
+    <section className="relative mx-auto max-w-7xl px-4 py-10 md:px-6">
+      <div className="pointer-events-none absolute -right-10 top-4 h-52 w-52 rounded-full bg-[#ffd8b3]/40 blur-3xl" />
+
+      <div className="relative rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-6 shadow-[var(--shadow-soft)] md:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Suche</p>
-        <h1 className="brand-title mt-2 text-3xl font-bold text-[color:var(--ink)] md:text-4xl">
+        <h1 className="mt-2 text-3xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-4xl">
           Ergebnisse für: <span className="text-[color:var(--brand)]">{query || "..."}</span>
         </h1>
         <p className="mt-3 text-sm text-[color:var(--muted)]">
@@ -74,15 +76,15 @@ function SearchContent() {
       )}
 
       {!loading && results.length === 0 && (
-        <div className="glass-panel mt-8 rounded-2xl p-6 text-[color:var(--muted)]">
+        <div className="mt-8 rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-6 text-[color:var(--muted)] shadow-[var(--shadow-soft)]">
           Keine Produkte gefunden.
         </div>
       )}
 
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {results.map((product) => (
-          <article key={product.id} className="glass-panel reveal-rise rounded-2xl p-5">
-            <h3 className="brand-title text-xl font-semibold text-[color:var(--ink)]">{product.name}</h3>
+          <article key={product.id} className="rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-5 shadow-[var(--shadow-soft)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)]">
+            <h3 className="text-xl font-semibold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">{product.name}</h3>
             <p className="mt-2 text-sm text-[color:var(--muted)]">
               {typeof product.calculatedPrice?.unitPrice === "number"
                 ? `${product.calculatedPrice.unitPrice.toFixed(2)} €`
@@ -90,7 +92,7 @@ function SearchContent() {
             </p>
             <button
               type="button"
-              className="mt-5 inline-flex items-center rounded-xl bg-[color:var(--brand)] px-4 py-2 text-sm font-bold text-white hover:bg-[color:var(--brand-deep)] disabled:opacity-60"
+              className="mt-5 inline-flex items-center rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2 text-sm font-bold text-white transition hover:from-[color:var(--brand-deep)] hover:to-[#c05d2b] disabled:opacity-60"
               onClick={() => handleAddToCart(product.id)}
               disabled={addingProductId === product.id}
             >

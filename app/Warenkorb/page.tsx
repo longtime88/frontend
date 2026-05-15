@@ -17,9 +17,9 @@ export default function Basket() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-neutral-100 flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--bg)]">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[color:var(--brand)]"></div>
         <p>Warenkorb wird geladen...</p>
       </div>
     </div>
