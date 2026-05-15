@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState } from 'react';
 import { addProductToShopwareCart, resolveShopwareProductId } from '@/lib/shopwareCart';
+import { SHOPWARE_CART_URL } from "@/lib/shopwareStorefront";
 
 type ProductItem = {
   id: number | string;
@@ -11,9 +12,8 @@ type ProductItem = {
   title?: string;
   price?: number;
   image?: string;
-  
+  description?: string;
 };
-
 
 type ProductProps = {
   product: ProductItem;
@@ -43,7 +43,7 @@ export const Product: React.FC<ProductProps> = ({ product }) => {
     setIsAdding(true);
     try {
       await addProductToShopwareCart(shopwareProductId, 1);
-      alert(`${productName} wurde zum Warenkorb hinzugefügt!`);
+      window.location.href = SHOPWARE_CART_URL;
     } catch (error) {
       console.error("Fehler beim Hinzufügen zum Warenkorb:", error);
       alert("Fehler beim Hinzufügen zum Warenkorb. Bitte versuche es erneut.");
@@ -53,34 +53,38 @@ export const Product: React.FC<ProductProps> = ({ product }) => {
   };
 
   return (
-    <article className="group overflow-hidden rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] shadow-[var(--shadow-soft)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)] hover:shadow-[0_20px_44px_rgba(86,45,19,0.16)]">
-      <div className="relative overflow-hidden bg-[color:var(--surface-strong)]">
+    <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-[#e2dbd1] bg-white shadow-[0_12px_32px_rgba(45,29,15,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c95a2b] hover:shadow-[0_20px_52px_rgba(45,29,15,0.12)]">
+      <div className="relative aspect-[16/9] overflow-hidden bg-[#fff8f0]">
         <Image
           src={productImage}
           alt={productName}
-          width={560}
-          height={360}
-          className="h-52 w-full object-cover transition duration-500 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-deep)]">
-          Bestseller
-        </span>
+        {product.price && (
+          <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#a0421a] shadow-sm">
+            Bestseller
+          </span>
+        )}
       </div>
 
-      <div className="space-y-4 p-5">
-        <h3 className="text-xl font-semibold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
+      <div className="flex flex-1 flex-col gap-3 p-6">
+        <h3 className="line-clamp-2 min-h-[3.5rem] text-xl font-semibold tracking-[0.02em] text-[#1a1a1a] [font-family:var(--font-fraunces)]">
           {productName}
         </h3>
-        <p className="text-sm text-[color:var(--muted)]">
-          Direkt einsetzbares Digital-Produkt für moderne Webprojekte.
+        <p className="line-clamp-3 text-sm leading-relaxed text-[#7a7368]">
+          {product.description || "Direkt einsetzbares Digital-Produkt für moderne Webprojekte."}
         </p>
-        <p className="text-2xl font-extrabold text-[color:var(--brand-deep)]">
-          {typeof product.price === "number" ? `${product.price.toFixed(2)} €` : "Preis auf Anfrage"}
-        </p>
+        <div className="mt-auto border-t border-[#f0e7dd] pt-4">
+          <p className="text-2xl font-extrabold text-[#a0421a]">
+            {typeof product.price === "number" ? `${product.price.toFixed(2)} €` : "Preis auf Anfrage"}
+          </p>
+        </div>
 
         <button
           type="button"
-          className="w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-3 text-sm font-bold tracking-wide text-white transition hover:from-[color:var(--brand-deep)] hover:to-[#c05d2b] disabled:opacity-60"
+          className="mt-2 w-full rounded-full bg-gradient-to-r from-[#c95a2b] to-[#e8723c] px-4 py-3 text-sm font-bold tracking-wide text-white shadow-md transition duration-300 hover:-translate-y-0.5 hover:from-[#a0421a] hover:to-[#c95a2b] disabled:cursor-not-allowed disabled:opacity-60"
           onClick={handleAddToCart}
           disabled={isAdding}
         >

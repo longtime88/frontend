@@ -1,5 +1,5 @@
 "use client"
- 
+  
 import { useState } from "react";
 
 const categories = [
@@ -14,7 +14,7 @@ export default function Category() {
   const toggle = (id: number) => {
     setOpenCategory(openCategory === id ? null : id);
   };
- 
+  
   return (
     <nav>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -25,22 +25,22 @@ export default function Category() {
               key={cat.id}
               type="button"
               onClick={() => toggle(cat.id)}
-              className="group rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] px-5 py-4 text-left shadow-[var(--shadow-soft)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)] hover:shadow-[0_16px_34px_rgba(86,45,19,0.14)]"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-[#e2dbd1] bg-white p-5 text-left shadow-[0_12px_32px_rgba(45,29,15,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c95a2b] hover:shadow-[0_16px_48px_rgba(45,29,15,0.08)]"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="text-lg font-semibold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
+                <p className="text-lg font-semibold tracking-[0.02em] text-[#1a1a1a] [font-family:var(--font-fraunces)]">
                 {cat.name}
                 </p>
-                <span className={`text-sm text-[color:var(--brand)] transition ${isOpen ? "rotate-45" : ""}`}>+</span>
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm text-[#c95a2b] transition ${isOpen ? "rotate-45 bg-[#fff0e2]" : "bg-[#fff8f0]"}`}>+</span>
               </div>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#7a7368]">
                 Services & Produkte
               </p>
 
               {isOpen && (
-                <ul className="mt-4 space-y-1 text-sm text-[color:var(--muted)]">
+                <ul className="mt-4 space-y-2 border-t border-[#e2dbd1] pt-3 text-sm text-[#7a7368]">
                   {cat.products.map((p) => (
-                    <li key={p}>• {p}</li>
+                    <li key={p} className="rounded-md px-1 py-0.5 leading-relaxed transition-colors hover:bg-[#fff8f0] hover:text-[#c95a2b]">• {p}</li>
                   ))}
                 </ul>
               )}

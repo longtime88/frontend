@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import "./globals.css";
 import Header from '@/app/components/Header';
+import Footer from "@/app/components/Footer";
 
 
 
@@ -36,13 +37,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-   
-    <html lang="de"> 
-      <body 
-        className={`${manrope.variable} ${fraunces.variable} antialiased`}>
+    <html lang="de">
+      <body className={`${manrope.variable} ${fraunces.variable} flex min-h-screen flex-col antialiased`}>
         <Header />
-        {children}
-        </body>
+        <main className="mx-auto w-full flex-1">{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }

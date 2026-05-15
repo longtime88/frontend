@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f8f1e6;
-  --surface: #fffaf3;
-  --surface-strong: #ffe8d2;
-  --ink: #2d231c;
-  --muted: #7a6758;
-  --line: #e5ccb0;
-  --brand: #c96830;
-  --brand-deep: #a94f23;
-  --accent: #2f7764;
-  --shadow-soft: 0 14px 32px rgba(86, 45, 19, 0.14);
+  --bg: #fefefe;
+  --surface: #ffffff;
+  --surface-subtle: #fff8f0;
+  --ink: #1a1a1a;
+  --muted: #7a7368;
+  --line: #e2dbd1;
+  --brand: #c95a2b;
+  --brand-deep: #a0421a;
+  --brand-light: #e8723c;
+  --accent: #3a8a75;
 }
 
 @theme inline {
@@ -22,8 +22,8 @@
 
 body {
   background:
-    radial-gradient(circle at 12% -12%, #ffd9b5 0%, transparent 38%),
-    radial-gradient(circle at 90% 8%, #ffeac9 0%, transparent 34%),
+    radial-gradient(circle at 8% -10%, #fff1e1 0%, transparent 34%),
+    radial-gradient(circle at 96% 6%, #fff5e9 0%, transparent 30%),
     var(--bg);
   color: var(--ink);
   font-family: var(--font-manrope), sans-serif;
@@ -34,10 +34,19 @@ a {
   text-decoration: none;
 }
 
+@layer utilities {
+  .shadow-soft {
+    box-shadow: 0 12px 32px rgba(45, 29, 15, 0.06);
+  }
+  .shadow-medium {
+    box-shadow: 0 16px 48px rgba(45, 29, 15, 0.08);
+  }
+}
+
 @media (max-width: 768px) {
   body {
     background:
-      radial-gradient(circle at 20% -10%, #ffd9b5 0%, transparent 42%),
+      radial-gradient(circle at 20% -10%, #fff1e1 0%, transparent 38%),
       var(--bg);
   }
 }

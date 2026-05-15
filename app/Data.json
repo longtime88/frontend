@@ -1,3 +1,4 @@
+
 {
   "products": [
     {
@@ -6,7 +7,8 @@
       "description": "Basis-Plugin mit Controller, Subscriber und Twig-Override als Startpunkt für Checkout-Anpassungen.",
       "category": "plugin",
       "price": 79.00,
-      "image": "images/Hintergrund.png"
+      "image": "images/Hintergrund.png",
+      "shopwareProductId": "019e2de949007a5696a87b5a06667a0e"
     },
     {
       "id": 2,
@@ -14,24 +16,28 @@
       "description": "Modernes Portfolio-Template mit Projektübersicht, Service-Sektion und CTA-Flow zum Shopware Checkout.",
       "category": "template",
       "price": 129.00,
-      "image": "images/Luna.jpg"
-      
+      "image": "images/Luna.jpg",
+      "shopwareProductId": "019e2de949007a5696a87b5a06667a0e"
     },
     {
       "id": 3,
       "title": "1:1 Shopware Setup Session",
       "description": "60 Minuten Pair Session für Architektur, Plugin-Setup und Go-Live-Checkliste.",
       "category": "mentoring",
-      "price": 149.00
-
+      "price": 149.00,
+      "shopwareProductId": "019e2de949007a5696a87b5a06667a0e"
     },
     {
       "id": 4,
-      "title": "Shopware Checkout Starter Plugin",
-      "description": "Basis-Plugin mit Controller, Subscriber und Twig-Override als Startpunkt für Checkout-Anpassungen.",
+      "title": "Shopware API Integration Kit",
+      "description": "Kompakte Lösung für REST-API Anbindungen mit Beispiel-Implementationsskripten.",
       "category": "plugin",
-      "price": 79.00,
-      "image": "images/Hintergrund.png"
+      "price": 99.00,
+      "image": "images/Hintergrund.png",
+      "shopwareProductId": "019e2de949007a5696a87b5a06667a0e"
     }
   ]
 }
+  
+
+  

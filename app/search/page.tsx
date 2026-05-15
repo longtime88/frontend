@@ -58,13 +58,14 @@ function SearchContent() {
   };
 
   return (
-    <section className="relative mx-auto max-w-7xl px-4 py-10 md:px-6">
+    <section className="relative mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-12">
       <div className="pointer-events-none absolute -right-10 top-4 h-52 w-52 rounded-full bg-[#ffd8b3]/40 blur-3xl" />
+      <div className="pointer-events-none absolute -left-10 bottom-4 h-52 w-52 rounded-full bg-[#d9efff]/35 blur-3xl" />
 
-      <div className="relative rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-6 shadow-[var(--shadow-soft)] md:p-8">
+      <div className="relative rounded-3xl border border-[color:var(--line)] bg-white p-6 shadow-[0_16px_40px_rgba(45,29,15,0.08)] md:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Suche</p>
         <h1 className="mt-2 text-3xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-4xl">
-          Ergebnisse für: <span className="text-[color:var(--brand)]">{query || "..."}</span>
+          Ergebnisse fuer: <span className="text-[color:var(--brand)]">{query || "..."}</span>
         </h1>
         <p className="mt-3 text-sm text-[color:var(--muted)]">
           Finde passende Produkte, Templates oder Services und lege sie direkt in den Warenkorb.
@@ -72,19 +73,26 @@ function SearchContent() {
       </div>
 
       {loading && (
-        <p className="mt-8 text-sm font-semibold text-[color:var(--muted)]">Suche läuft...</p>
+        <div className="mt-8 rounded-2xl border border-[#eadfce] bg-[#fffaf3] p-5 text-sm font-semibold text-[color:var(--muted)]">
+          Suche laeuft...
+        </div>
       )}
 
       {!loading && results.length === 0 && (
-        <div className="mt-8 rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-6 text-[color:var(--muted)] shadow-[var(--shadow-soft)]">
+        <div className="mt-8 rounded-2xl border border-[color:var(--line)] bg-white p-6 text-[color:var(--muted)] shadow-[0_12px_32px_rgba(45,29,15,0.06)]">
           Keine Produkte gefunden.
         </div>
       )}
 
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {results.map((product) => (
-          <article key={product.id} className="rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-5 shadow-[var(--shadow-soft)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)]">
-            <h3 className="text-xl font-semibold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">{product.name}</h3>
+          <article
+            key={product.id}
+            className="rounded-2xl border border-[color:var(--line)] bg-white p-5 shadow-[0_12px_32px_rgba(45,29,15,0.06)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)]"
+          >
+            <h3 className="text-xl font-semibold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
+              {product.name}
+            </h3>
             <p className="mt-2 text-sm text-[color:var(--muted)]">
               {typeof product.calculatedPrice?.unitPrice === "number"
                 ? `${product.calculatedPrice.unitPrice.toFixed(2)} €`
@@ -92,11 +100,11 @@ function SearchContent() {
             </p>
             <button
               type="button"
-              className="mt-5 inline-flex items-center rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2 text-sm font-bold text-white transition hover:from-[color:var(--brand-deep)] hover:to-[#c05d2b] disabled:opacity-60"
+              className="mt-5 inline-flex items-center rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2 text-sm font-bold text-white transition duration-300 hover:-translate-y-0.5 hover:from-[color:var(--brand-deep)] hover:to-[#c05d2b] disabled:opacity-60"
               onClick={() => handleAddToCart(product.id)}
               disabled={addingProductId === product.id}
             >
-              {addingProductId === product.id ? "Wird hinzugefügt..." : "In den Warenkorb"}
+              {addingProductId === product.id ? "Wird hinzugefuegt..." : "In den Warenkorb"}
             </button>
           </article>
         ))}
@@ -107,7 +115,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="p-6">Lade Suchergebnisse...</div>}>
+    <Suspense fallback={<div className="mx-auto max-w-7xl p-6 text-sm">Lade Suchergebnisse...</div>}>
       <SearchContent />
     </Suspense>
   );
