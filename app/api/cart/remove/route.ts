@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const rawShopwareUrl = process.env.SHOPWARE_URL || "https://localhost:8000";
-  const shopwareBaseUrl = rawShopwareUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
   const accessKey =
     process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
 
@@ -30,40 +28,30 @@ export async function POST(request: Request) {
     );
   }
 
+  const baseUrl = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  const cleanUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+  const removeUrl = `${cleanUrl}/store-api/checkout/line-item?id=${encodeURIComponent(itemId)}`;
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "sw-access-key": accessKey,
   };
 
-  if (contextToken !== "") {
+  if (contextToken) {
     headers["sw-context-token"] = contextToken;
   }
 
   try {
-    const removeUrl = `${shopwareBaseUrl}/store-api/checkout/line-item?id=${encodeURIComponent(itemId)}`;
-    const fetchOptions: RequestInit = {
-      method: "DELETE",
-      headers,
-      cache: "no-store",
-    };
-
     let upstream: Response;
     try {
-      upstream = await fetch(removeUrl, fetchOptions);
+      upstream = await fetch(removeUrl, { method: "DELETE", headers, cache: "no-store" });
     } catch (error) {
       const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
-      if (!allowSelfSigned) {
-        throw error;
-      }
-
-      const fallbackUrl = removeUrl.startsWith("https://")
-        ? removeUrl
-        : removeUrl.replace(/^http:\/\//i, "https://");
+      if (!allowSelfSigned) throw error;
       const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       try {
-        upstream = await fetch(fallbackUrl, fetchOptions);
+        upstream = await fetch(removeUrl, { method: "DELETE", headers, cache: "no-store" });
       } finally {
         if (previousTlsMode === undefined) {
           delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;

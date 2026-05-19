@@ -15,8 +15,13 @@ const nextConfig: NextConfig = {
         source: "/backend-api/:path*",
         destination: `${BACKEND_API_BASE}/api/:path*`,
       },
+      {
+        source: "/store-api/:path*",
+        destination: `${BACKEND_API_BASE}/store-api/:path*`,
+      },
     ];
   },
 };
 
 export default nextConfig;
+

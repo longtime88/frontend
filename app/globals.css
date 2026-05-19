@@ -1,16 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fefefe;
-  --surface: #ffffff;
-  --surface-subtle: #fff8f0;
-  --ink: #1a1a1a;
-  --muted: #7a7368;
-  --line: #e2dbd1;
-  --brand: #c95a2b;
-  --brand-deep: #a0421a;
-  --brand-light: #e8723c;
-  --accent: #3a8a75;
+  /* Space-Blue Palette */
+  --bg: #0a0e1a;
+  --surface: rgba(16, 22, 42, 0.72);
+  --surface-subtle: rgba(22, 32, 60, 0.55);
+  --surface-card: rgba(18, 28, 56, 0.8);
+  --ink: #e8ecf4;
+  --muted: #8892b0;
+  --line: rgba(100, 130, 200, 0.18);
+  --brand: #4f9eff;
+  --brand-deep: #2d6fd8;
+  --brand-light: #7bb8ff;
+  --accent: #38c8e0;
+  --glow: rgba(79, 158, 255, 0.12);
+  --glow-strong: rgba(79, 158, 255, 0.25);
 }
 
 @theme inline {
@@ -22,11 +26,13 @@
 
 body {
   background:
-    radial-gradient(circle at 8% -10%, #fff1e1 0%, transparent 34%),
-    radial-gradient(circle at 96% 6%, #fff5e9 0%, transparent 30%),
+    radial-gradient(ellipse 70% 60% at 10% 0%,    rgba(30, 60, 150, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 90% 5%,    rgba(20, 80, 180, 0.22) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 100%,  rgba(10, 40, 120, 0.18) 0%, transparent 50%),
     var(--bg);
   color: var(--ink);
   font-family: var(--font-manrope), sans-serif;
+  min-height: 100vh;
 }
 
 a {
@@ -34,19 +40,46 @@ a {
   text-decoration: none;
 }
 
+/* ── Glassmorphism Utilities ── */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--line);
+}
+.glass-card {
+  background: var(--surface-card);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  border: 1px solid rgba(100, 140, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.glass-glow {
+  box-shadow: 0 0 0 1px var(--line), 0 0 40px var(--glow), 0 8px 30px rgba(0, 0, 0, 0.22);
+}
+.glass-input {
+  background: rgba(10, 18, 40, 0.55);
+  border: 1px solid rgba(100, 140, 255, 0.15);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
 @layer utilities {
   .shadow-soft {
-    box-shadow: 0 12px 32px rgba(45, 29, 15, 0.06);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--line);
   }
   .shadow-medium {
-    box-shadow: 0 16px 48px rgba(45, 29, 15, 0.08);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--line);
+  }
+  .shadow-glow {
+    box-shadow: 0 0 30px var(--glow), 0 8px 30px rgba(0, 0, 0, 0.2);
   }
 }
 
 @media (max-width: 768px) {
   body {
     background:
-      radial-gradient(circle at 20% -10%, #fff1e1 0%, transparent 38%),
+      radial-gradient(ellipse 90% 70% at 50% 0%, rgba(20, 50, 140, 0.3) 0%, transparent 55%),
       var(--bg);
   }
 }

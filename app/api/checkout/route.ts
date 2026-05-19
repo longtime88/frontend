@@ -1,10 +1,88 @@
 import { NextResponse } from "next/server";
 
+export async function GET(request: Request) {
+  const accessKey = process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
+
+  if (!accessKey) {
+    return NextResponse.json(
+      { error: "SHOPWARE_STORE_API_ACCESS_KEY fehlt in .env.local" },
+      { status: 500 }
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const contextToken = searchParams.get("contextToken") || "";
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "sw-access-key": accessKey,
+  };
+
+  if (contextToken) headers["sw-context-token"] = contextToken;
+
+  try {
+    const cartUrl = "/store-api/checkout/cart";
+    const fetchOptions: RequestInit = {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    };
+
+    let upstream: Response;
+    try {
+      upstream = await fetch(cartUrl, fetchOptions);
+    } catch (err) {
+      const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
+      if (!allowSelfSigned) throw err;
+      const httpsUrl = cartUrl.startsWith("https://") ? cartUrl : cartUrl.replace(/^http:\/\//i, "https://");
+      const prev = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      try {
+        upstream = await fetch(httpsUrl, fetchOptions);
+      } finally {
+        if (prev === undefined) {
+          delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+        } else {
+          process.env.NODE_TLS_REJECT_UNAUTHORIZED = prev;
+        }
+      }
+    }
+
+    const data = await upstream.json().catch(() => ({}));
+    const nextContextToken =
+      upstream.headers.get("sw-context-token") ||
+      (typeof (data as Record<string, unknown>)?.token === "string"
+        ? (data as Record<string, string>).token
+        : "");
+
+    if (!upstream.ok) {
+      return NextResponse.json(
+        {
+          error:
+            (data as Record<string, Array<Record<string, string>>>)?.errors?.[0]?.detail ||
+            (data as Record<string, Array<Record<string, string>>>)?.errors?.[0]?.title ||
+            "Warenkorb konnte nicht geladen werden.",
+          contextToken: nextContextToken || undefined,
+        },
+        { status: upstream.status }
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      cart: data,
+      contextToken: nextContextToken || undefined,
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Shopware Cart API ist nicht erreichbar." },
+      { status: 502 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
-  const rawShopwareUrl = process.env.SHOPWARE_URL || "https://localhost:8000";
-  const shopwareBaseUrl = rawShopwareUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
-  const accessKey =
-    process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
+  const accessKey = process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
 
   if (!accessKey) {
     return NextResponse.json(
@@ -30,62 +108,63 @@ export async function POST(request: Request) {
     "sw-access-key": accessKey,
   };
 
-  if (contextToken !== "") {
-    headers["sw-context-token"] = contextToken;
-  }
+  if (contextToken) headers["sw-context-token"] = contextToken;
 
   try {
-    const orderUrl = `${shopwareBaseUrl}/store-api/checkout/order`;
+    const orderUrl = "/store-api/checkout/order";
+    const countryId = shippingAddress.countryId || billingAddress.countryId || "f3e1b85c74df4e8fae2f3ef2da38e44f";
+
+    const body = {
+      lineItems: payload.lineItems || [],
+      shippingAddress: {
+        firstName: shippingAddress.firstName || "",
+        lastName: shippingAddress.lastName || "",
+        street: shippingAddress.street || "",
+        streetAdditional: shippingAddress.streetAdditional || "",
+        city: shippingAddress.city || "",
+        zipcode: shippingAddress.zipcode || "",
+        countryId,
+        countryStateId: shippingAddress.countryStateId || null,
+        company: shippingAddress.company || "",
+      },
+      billingAddress: {
+        firstName: billingAddress.firstName || "",
+        lastName: billingAddress.lastName || "",
+        street: billingAddress.street || "",
+        streetAdditional: billingAddress.streetAdditional || "",
+        city: billingAddress.city || "",
+        zipcode: billingAddress.zipcode || "",
+        countryId,
+        countryStateId: billingAddress.countryStateId || null,
+        company: billingAddress.company || "",
+      },
+      paymentMethod: paymentMethod || undefined,
+      shippingMethod: payload.shippingMethod || undefined,
+    };
+
     const fetchOptions: RequestInit = {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        shippingAddress: {
-          firstName: shippingAddress.firstName || "",
-          lastName: shippingAddress.lastName || "",
-          street: shippingAddress.street || "",
-          city: shippingAddress.city || "",
-          zipcode: shippingAddress.zipcode || "",
-          countryId: shippingAddress.countryId || "f3e1b85c74df4e8fae2f3ef2da38e44f",
-          countryStateId: shippingAddress.countryStateId || null,
-        },
-        billingAddress: {
-          firstName: billingAddress.firstName || "",
-          lastName: billingAddress.lastName || "",
-          street: billingAddress.street || "",
-          city: billingAddress.city || "",
-          zipcode: billingAddress.zipcode || "",
-          countryId: billingAddress.countryId || "f3e1b85c74df4e8fae2f3ef2da38e44f",
-          countryStateId: billingAddress.countryStateId || null,
-        },
-        paymentMethod: paymentMethod || "f3e1b85c74df4e8fae2f3ef2da38e44f",
-        shippingMethod: payload.shippingMethod || "f3e1b85c74df4e8fae2f3ef2da38e44f",
-      }),
+      body: JSON.stringify(body),
       cache: "no-store",
     };
 
     let upstream: Response;
     try {
       upstream = await fetch(orderUrl, fetchOptions);
-    } catch (error) {
+    } catch (err) {
       const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
-      if (!allowSelfSigned) {
-        throw error;
-      }
-
-      const fallbackUrl = orderUrl.startsWith("https://")
-        ? orderUrl
-        : orderUrl.replace(/^http:\/\//i, "https://");
-      const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-
+      if (!allowSelfSigned) throw err;
+      const httpsUrl = orderUrl.startsWith("https://") ? orderUrl : orderUrl.replace(/^http:\/\//i, "https://");
+      const prev = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       try {
-        upstream = await fetch(fallbackUrl, fetchOptions);
+        upstream = await fetch(httpsUrl, fetchOptions);
       } finally {
-        if (previousTlsMode === undefined) {
+        if (prev === undefined) {
           delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
         } else {
-          process.env.NODE_TLS_REJECT_UNAUTHORIZED = previousTlsMode;
+          process.env.NODE_TLS_REJECT_UNAUTHORIZED = prev;
         }
       }
     }
@@ -93,16 +172,17 @@ export async function POST(request: Request) {
     const data = await upstream.json().catch(() => ({}));
     const nextContextToken =
       upstream.headers.get("sw-context-token") ||
-      (typeof data?.token === "string" ? data.token : "");
+      (typeof (data as Record<string, unknown>)?.token === "string"
+        ? (data as Record<string, string>).token
+        : "");
 
     if (!upstream.ok) {
       return NextResponse.json(
         {
           error:
-            data?.errors?.[0]?.detail ||
-            data?.errors?.[0]?.title ||
+            (data as Record<string, Array<Record<string, string>>>)?.errors?.[0]?.detail ||
+            (data as Record<string, Array<Record<string, string>>>)?.errors?.[0]?.title ||
             "Bestellung fehlgeschlagen.",
-          details: data,
           contextToken: nextContextToken || undefined,
         },
         { status: upstream.status }
@@ -117,97 +197,6 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json(
       { error: "Shopware Order API ist nicht erreichbar." },
-      { status: 502 }
-    );
-  }
-}
-
-export async function GET(request: Request) {
-  const rawShopwareUrl = process.env.SHOPWARE_URL || "http://localhost:8000";
-  const shopwareBaseUrl = rawShopwareUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
-  const accessKey =
-    process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
-
-  if (!accessKey) {
-    return NextResponse.json(
-      { error: "SHOPWARE_STORE_API_ACCESS_KEY fehlt in .env.local" },
-      { status: 500 }
-    );
-  }
-
-  const { searchParams } = new URL(request.url);
-  const contextToken = searchParams.get("contextToken") || "";
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "sw-access-key": accessKey,
-  };
-
-  if (contextToken !== "") {
-    headers["sw-context-token"] = contextToken;
-  }
-
-  try {
-    const cartUrl = `${shopwareBaseUrl}/store-api/checkout/cart`;
-    const fetchOptions: RequestInit = {
-      method: "GET",
-      headers,
-      cache: "no-store",
-    };
-
-    let upstream: Response;
-    try {
-      upstream = await fetch(cartUrl, fetchOptions);
-    } catch (error) {
-      const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
-      if (!allowSelfSigned) {
-        throw error;
-      }
-
-      const fallbackUrl = cartUrl.startsWith("https://")
-        ? cartUrl
-        : cartUrl.replace(/^http:\/\//i, "https://");
-      const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      try {
-        upstream = await fetch(fallbackUrl, fetchOptions);
-      } finally {
-        if (previousTlsMode === undefined) {
-          delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-        } else {
-          process.env.NODE_TLS_REJECT_UNAUTHORIZED = previousTlsMode;
-        }
-      }
-    }
-
-    const data = await upstream.json().catch(() => ({}));
-    const nextContextToken =
-      upstream.headers.get("sw-context-token") ||
-      (typeof data?.token === "string" ? data.token : "");
-
-    if (!upstream.ok) {
-      return NextResponse.json(
-        {
-          error:
-            data?.errors?.[0]?.detail ||
-            data?.errors?.[0]?.title ||
-            "Warenkorb konnte nicht geladen werden.",
-          details: data,
-          contextToken: nextContextToken || undefined,
-        },
-        { status: upstream.status }
-      );
-    }
-
-    return NextResponse.json({
-      ok: true,
-      cart: data,
-      contextToken: nextContextToken || undefined,
-    });
-  } catch {
-    return NextResponse.json(
-      { error: "Shopware Cart API ist nicht erreichbar." },
       { status: 502 }
     );
   }

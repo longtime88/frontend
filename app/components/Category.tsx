@@ -1,5 +1,5 @@
 "use client"
-  
+
 import { useState } from "react";
 
 const categories = [
@@ -7,14 +7,12 @@ const categories = [
   { id: 2, name: "Frontend Templates", products: ["Landingpage Kits", "Next.js Storefront UI", "Responsive Components"] },
   { id: 3, name: "Automation", products: ["API Integrationen", "ERP Sync", "Lead Workflows"] },
   { id: 4, name: "Mentoring", products: ["Code Review", "Pair Programming", "Tech Setup Sessions"] }
-]; 
+];
 
 export default function Category() {
   const [openCategory, setOpenCategory] = useState<number | null>(null);
-  const toggle = (id: number) => {
-    setOpenCategory(openCategory === id ? null : id);
-  };
-  
+  const toggle = (id: number) => setOpenCategory(openCategory === id ? null : id);
+
   return (
     <nav>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -25,22 +23,24 @@ export default function Category() {
               key={cat.id}
               type="button"
               onClick={() => toggle(cat.id)}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-[#e2dbd1] bg-white p-5 text-left shadow-[0_12px_32px_rgba(45,29,15,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c95a2b] hover:shadow-[0_16px_48px_rgba(45,29,15,0.08)]"
+              className="glass-card group flex flex-col overflow-hidden rounded-2xl p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-glow"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="text-lg font-semibold tracking-[0.02em] text-[#1a1a1a] [font-family:var(--font-fraunces)]">
-                {cat.name}
+                <p className="text-lg font-semibold tracking-[0.02em] bg-gradient-to-r from-[#b0c8f8] to-[#7bb8ff] bg-clip-text text-transparent [font-family:var(--font-fraunces)]">
+                  {cat.name}
                 </p>
-                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm text-[#c95a2b] transition ${isOpen ? "rotate-45 bg-[#fff0e2]" : "bg-[#fff8f0]"}`}>+</span>
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm text-[#4f9eff] transition ${isOpen ? "rotate-45 bg-[rgba(30,60,160,0.3)]" : "bg-[rgba(30,50,120,0.25)]"}`}>+</span>
               </div>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#7a7368]">
-                Services & Produkte
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#5a7090]">
+                Services &amp; Produkte
               </p>
 
               {isOpen && (
-                <ul className="mt-4 space-y-2 border-t border-[#e2dbd1] pt-3 text-sm text-[#7a7368]">
+                <ul className="mt-4 space-y-2 border-t border-[rgba(100,140,255,0.12)] pt-3 text-sm text-[#8892b0]">
                   {cat.products.map((p) => (
-                    <li key={p} className="rounded-md px-1 py-0.5 leading-relaxed transition-colors hover:bg-[#fff8f0] hover:text-[#c95a2b]">• {p}</li>
+                    <li key={p} className="rounded-md px-1 py-0.5 leading-relaxed transition-colors hover:bg-[rgba(30,60,160,0.18)] hover:text-[#7bb8ff]">
+                      • {p}
+                    </li>
                   ))}
                 </ul>
               )}
