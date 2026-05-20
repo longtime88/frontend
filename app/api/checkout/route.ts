@@ -1,5 +1,38 @@
 import { NextResponse } from "next/server";
 
+function getBaseUrl() {
+  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  return raw.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+}
+
+async function shopwareFetch(path: string, options: RequestInit, headers: Record<string, string>) {
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}/store-api${path}`;
+  
+  let resp: Response;
+  try {
+    resp = await fetch(url, { ...options, headers });
+  } catch (err) {
+    if (process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true") {
+      const httpsUrl = url.replace(/^http:\/\//i, "https://");
+      const prev = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      try {
+        resp = await fetch(httpsUrl, { ...options, headers });
+      } finally {
+        if (prev === undefined) {
+          delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+        } else {
+          process.env.NODE_TLS_REJECT_UNAUTHORIZED = prev;
+        }
+      }
+    } else {
+      throw err;
+    }
+  }
+  return { response: resp, json: await resp.json().catch(() => ({})) };
+}
+
 export async function GET(request: Request) {
   const accessKey = process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
 
@@ -21,41 +54,17 @@ export async function GET(request: Request) {
   if (contextToken) headers["sw-context-token"] = contextToken;
 
   try {
-    const cartUrl = "/store-api/checkout/cart";
-    const fetchOptions: RequestInit = {
+    const { response, json } = await shopwareFetch("/checkout/cart", {
       method: "GET",
-      headers,
       cache: "no-store",
-    };
-
-    let upstream: Response;
-    try {
-      upstream = await fetch(cartUrl, fetchOptions);
-    } catch (err) {
-      const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
-      if (!allowSelfSigned) throw err;
-      const httpsUrl = cartUrl.startsWith("https://") ? cartUrl : cartUrl.replace(/^http:\/\//i, "https://");
-      const prev = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      try {
-        upstream = await fetch(httpsUrl, fetchOptions);
-      } finally {
-        if (prev === undefined) {
-          delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-        } else {
-          process.env.NODE_TLS_REJECT_UNAUTHORIZED = prev;
-        }
-      }
-    }
-
-    const data = await upstream.json().catch(() => ({}));
+    }, headers);
+    
+    const data = json as Record<string, unknown>;
     const nextContextToken =
-      upstream.headers.get("sw-context-token") ||
-      (typeof (data as Record<string, unknown>)?.token === "string"
-        ? (data as Record<string, string>).token
-        : "");
+      response.headers.get("sw-context-token") ||
+      (typeof data?.token === "string" ? data.token : "");
 
-    if (!upstream.ok) {
+    if (!response.ok) {
       return NextResponse.json(
         {
           error:
@@ -64,7 +73,7 @@ export async function GET(request: Request) {
             "Warenkorb konnte nicht geladen werden.",
           contextToken: nextContextToken || undefined,
         },
-        { status: upstream.status }
+        { status: response.status }
       );
     }
 
@@ -111,7 +120,6 @@ export async function POST(request: Request) {
   if (contextToken) headers["sw-context-token"] = contextToken;
 
   try {
-    const orderUrl = "/store-api/checkout/order";
     const countryId = shippingAddress.countryId || billingAddress.countryId || "f3e1b85c74df4e8fae2f3ef2da38e44f";
 
     const body = {
@@ -142,41 +150,18 @@ export async function POST(request: Request) {
       shippingMethod: payload.shippingMethod || undefined,
     };
 
-    const fetchOptions: RequestInit = {
+    const { response, json } = await shopwareFetch("/checkout/order", {
       method: "POST",
-      headers,
       body: JSON.stringify(body),
       cache: "no-store",
-    };
+    }, headers);
 
-    let upstream: Response;
-    try {
-      upstream = await fetch(orderUrl, fetchOptions);
-    } catch (err) {
-      const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
-      if (!allowSelfSigned) throw err;
-      const httpsUrl = orderUrl.startsWith("https://") ? orderUrl : orderUrl.replace(/^http:\/\//i, "https://");
-      const prev = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      try {
-        upstream = await fetch(httpsUrl, fetchOptions);
-      } finally {
-        if (prev === undefined) {
-          delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-        } else {
-          process.env.NODE_TLS_REJECT_UNAUTHORIZED = prev;
-        }
-      }
-    }
-
-    const data = await upstream.json().catch(() => ({}));
+    const data = json as Record<string, unknown>;
     const nextContextToken =
-      upstream.headers.get("sw-context-token") ||
-      (typeof (data as Record<string, unknown>)?.token === "string"
-        ? (data as Record<string, string>).token
-        : "");
+      response.headers.get("sw-context-token") ||
+      (typeof data?.token === "string" ? data.token : "");
 
-    if (!upstream.ok) {
+    if (!response.ok) {
       return NextResponse.json(
         {
           error:
@@ -185,7 +170,7 @@ export async function POST(request: Request) {
             "Bestellung fehlgeschlagen.",
           contextToken: nextContextToken || undefined,
         },
-        { status: upstream.status }
+        { status: response.status }
       );
     }
 

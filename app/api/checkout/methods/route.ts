@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { getShopwareApiBase } from "@/lib/shopwareStorefront";
+
+
 
 function getEnv() {
   const key = process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
@@ -13,17 +16,20 @@ function makeHeaders(contextToken: string): Record<string, string> {
   return headers;
 }
 
-async function shopwareFetch(url: string, options: RequestInit): Promise<{ json: unknown }> {
+async function shopwareFetch(path: string, options: RequestInit, headers: Record<string, string>): Promise<{ json: unknown }> {
+  const baseUrl = getShopwareApiBase();
+  const url = `${baseUrl}/store-api${path}`;
+  
   let resp: Response;
   try {
-    resp = await fetch(url, options);
+    resp = await fetch(url, { ...options, headers });
   } catch {
     if (process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true") {
-      const https = url.startsWith("https://") ? url : url.replace(/^http:\/\//i, "https://");
+      const httpsUrl = url.replace(/^http:\/\//i, "https://");
       const prev = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       try {
-        resp = await fetch(https, options);
+        resp = await fetch(httpsUrl, { ...options, headers });
       } finally {
         if (prev === undefined) {
           delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
@@ -45,12 +51,12 @@ export async function GET(request: Request) {
   }
 
   const token = new URL(request.url).searchParams.get("contextToken") || "";
+  const headers = makeHeaders(token);
 
   try {
-    const headers = makeHeaders(token);
     const [paymentRes, shippingRes] = await Promise.all([
-      shopwareFetch("/store-api/payment-method", { method: "GET", headers, cache: "no-store" }),
-      shopwareFetch("/store-api/shipping-method", { method: "GET", headers, cache: "no-store" }),
+      shopwareFetch("/payment-method", { method: "GET", cache: "no-store" }, headers),
+      shopwareFetch("/shipping-method", { method: "GET", cache: "no-store" }, headers),
     ]);
 
     // Normalize: expected output is { id, name, description, media, formUrl }

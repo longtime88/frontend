@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { SHOPWARE_CART_URL } from "@/lib/shopwareStorefront";
-import { getCustomCartItems, getShopwareContextToken, mergeCartWithCustom } from "@/lib/shopwareCart";
+import { SHOPWARE_CART_URL, SHOPWARE_CONFIRM_URL } from "@/lib/shopwareStorefront";
+import { getCustomCartItems, getShopwareContextToken, mergeCartWithCustom, addProductToShopwareCart } from "@/lib/shopwareCart";
 
 type Address = { firstName: string; lastName: string; street: string; streetAdditional?: string; city: string; zipcode: string; countryId?: string; company?: string; salutationId?: string | null };
 type ShippingMethod = { id: string; name: string; description?: string; media?: { url?: string }; deliveryTime?: string };
@@ -36,6 +36,7 @@ const shortFields: [string, keyof Address][] = [
 
 export default function Checkout() {
   const router = useRouter();
+  const hasAddedProduct = useRef(false);
   const [step, setStep] = useState<"address" | "shipping" | "payment" | "review" | "success">("address");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -54,45 +55,61 @@ export default function Checkout() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPayment, setSelectedPayment] = useState("");
 
-  // --- Warenkorb laden ---
-  const loadCart = useCallback(async () => {
-    const token = getShopwareContextToken();
-    setContextToken(token);
-    try {
-      const r = await fetch(`/api/checkout?contextToken=${encodeURIComponent(token)}`);
-      const data = await r.json();
-      if (!r.ok || !data.ok) { setError(data?.error || "Warenkorb-Fehler"); setLoading(false); return; }
-      if (data.contextToken) {
-        setContextToken(data.contextToken);
-        localStorage.setItem("sw-context-token", data.contextToken);
-        document.cookie = `sw-context-token=${encodeURIComponent(data.contextToken)}; path=/; max-age=2592000; samesite=lax`;
-      }
-      const lineItems = data.cart?.lineItems || {};
-      const customItems = getCustomCartItems();
-      const merged = mergeCartWithCustom(lineItems, customItems);
-      const items = (merged as Array<Record<string, unknown>>).map((li) => ({
-        id: String(li.id ?? ""),
-        label: String(li.label ?? ""),
-        quantity: Number(li.quantity) || 1,
-        priceTotal: Number((li.priceTotal as number) ?? (li.price as Record<string, unknown>)?.totalPrice ?? 0),
-        cover: li.cover as string | { media?: { url?: string; translated?: { alt?: string } } } | undefined,
-      }));
+   // --- Warenkorb laden ---
+   const loadCart = useCallback(async () => {
+     const token = getShopwareContextToken();
+     setContextToken(token);
+     try {
+       const r = await fetch(`/api/checkout?contextToken=${encodeURIComponent(token)}`);
+       const data = await r.json();
+       if (!r.ok || !data.ok) { setError(data?.error || "Warenkorb-Fehler"); setLoading(false); return; }
+       if (data.contextToken) {
+         setContextToken(data.contextToken);
+         localStorage.setItem("sw-context-token", data.contextToken);
+         document.cookie = `sw-context-token=${encodeURIComponent(data.contextToken)}; path=/; max-age=2592000; samesite=lax`;
+       }
+       
+       // DEBUG: Log the cart data
+       console.log("Cart data from Shopware:", data.cart);
+       console.log("Cart totalPrice:", data.cart?.price?.totalPrice);
+       console.log("Shipping costs:", data.shippingCosts?.totalPrice ?? data.cart?.price?.shippingCosts?.totalPrice);
+       
+       const lineItems = data.cart?.lineItems || {};
+       const customItems = getCustomCartItems();
+       const merged = mergeCartWithCustom(lineItems, customItems);
+       const items = (merged as Array<Record<string, unknown>>).map((li) => ({
+         id: String(li.id ?? ""),
+         label: String(li.label ?? ""),
+         quantity: Number(li.quantity) || 1,
+         priceTotal: Number((li.priceTotal as number) ?? (li.price as Record<string, unknown>)?.totalPrice ?? 0),
+         cover: li.cover as string | { media?: { url?: string; translated?: { alt?: string } } } | undefined,
+       }));
 
-      // Dedup items that share the same id
-      const seen = new Set<string>();
-      const deduped: typeof cartItems = [];
-      for (const it of items) {
-        if (!seen.has(it.id)) { seen.add(it.id); deduped.push(it); }
-      }
-      setCartItems(deduped);
-      setCartTotal(Number(data.cart?.price?.totalPrice ?? 0));
-      setShippingCostsRaw(Number(data.shippingCosts?.totalPrice ?? data.cart?.price?.shippingCosts?.totalPrice ?? 0));
-      setLoading(false);
+       // Dedup items that share the same id
+       const seen = new Set<string>();
+       const deduped: typeof cartItems = [];
+       for (const it of items) {
+         if (!seen.has(it.id)) { seen.add(it.id); deduped.push(it); }
+       }
+       
+       // DEBUG: Log the processed cart items
+       console.log("Processed cart items:", deduped.map(item => ({
+         id: item.id,
+         label: item.label,
+         quantity: item.quantity,
+         priceTotal: item.priceTotal,
+         formattedPrice: fmtPrice(item.priceTotal)
+       })));
+       
+       setCartItems(deduped);
+       setCartTotal(Number(data.cart?.price?.totalPrice ?? 0));
+       setShippingCostsRaw(Number(data.shippingCosts?.totalPrice ?? data.cart?.price?.shippingCosts?.totalPrice ?? 0));
+       setLoading(false);
 
-      // Zahlungs- und Versandarten parallel laden
-      await Promise.all([loadMethods(token), loadCartItems(token)]);
-    } catch { setError("Server nicht erreichbar."); setLoading(false); }
-  }, []);
+       // Zahlungs- und Versandarten parallel laden
+       await Promise.all([loadMethods(token), loadCartItems(token)]);
+     } catch { setError("Server nicht erreichbar."); setLoading(false); }
+   }, []);
 
   const loadMethods = async (token: string) => {
     const r = await fetch(`/api/checkout/methods?contextToken=${encodeURIComponent(token || "")}`);
@@ -137,9 +154,33 @@ export default function Checkout() {
   };
 
   useEffect(() => {
+    const token = getShopwareContextToken();
+    setContextToken(token);
     loadCart();
     loadPreviousAddresses();
-  }, [loadCart]);
+  }, []);
+
+  // Charging: Wenn ?product=ID in der URL, das Produkt zum Warenkorb hinzufügen
+  useEffect(() => {
+    // Nur im Browser ausführen
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get("product");
+    if (!productId) return;
+
+    // Kurze Verzögerung damit loadCart zuerst fertig wird
+    const timer = setTimeout(() => {
+      // Prüfe ob bereits im Warenkorb
+      const alreadyInCart = cartItems.some(
+        (i: { id: string }) => i.id === productId || i.id === `custom:${productId}`
+      );
+      if (!alreadyInCart) {
+        addProductToShopwareCart(productId, 1).catch(console.error);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [cartItems]);
 
   // --- Bestellung abschicken ---
   const placeOrder = async () => {
@@ -168,7 +209,8 @@ export default function Checkout() {
         localStorage.setItem("sw-context-token", data.contextToken);
         document.cookie = `sw-context-token=${encodeURIComponent(data.contextToken)}; path=/; max-age=2592000; samesite=lax`;
       }
-      setStep("success");
+      // Nach erfolgreicher Bestellung zum Shopware-Checkout (Zahlung/Confirmation) weiterleiten
+      window.location.href = SHOPWARE_CONFIRM_URL;
     } catch { setError("Shopware nicht erreichbar."); }
     finally { setSubmitting(false); }
   };
@@ -179,22 +221,6 @@ export default function Checkout() {
       <div className="flex min-h-screen items-center justify-center bg-[color:var(--bg)]">
         <div className="text-center"><div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[color:var(--brand)]" /><p>Checkout wird geladen…</p></div>
       </div>
-    );
-  }
-
-  if (step === "success") {
-    return (
-      <section className="mx-auto max-w-xl px-4 py-20 text-center">
-        <div className="mb-4 text-6xl">✅</div>
-        <h1 className="text-3xl font-bold [font-family:var(--font-fraunces)]">Vielen Dank für deine Bestellung!</h1>
-        <p className="mt-4 text-[color:var(--muted)]">
-          Wir haben deine Bestellung erhalten. Du bekommst eine Bestätigung per E-Mail.
-        </p>
-        <button onClick={() => router.push("/")}
-          className="mt-8 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-8 py-3 font-bold text-white hover:-translate-y-0.5 transition">
-          Zurück zur Startseite
-        </button>
-      </section>
     );
   }
 
@@ -359,11 +385,18 @@ export default function Checkout() {
                 <div className="border-t border-[color:var(--line)] pt-4">
                   <p className="font-semibold">Artikel ({cartItems.length})</p>
                   {cartItems.map(item => (
-                    <div key={item.id} className="mt-1 flex justify-between text-[color:var(--muted)]">
-                      <span>{item.label} × {item.quantity}</span>
-                      <span>{fmtPrice(item.priceTotal)}</span>
+                    <div key={item.id} className="mt-1 flex items-center justify-between gap-4">
+                      <span className="text-[color:var(--muted)]">{item.label} × {item.quantity}</span>
+                      <span className="text-sm font-semibold text-[color:var(--ink)]">{fmtPrice(item.priceTotal)}</span>
                     </div>
                   ))}
+                  <div className="mt-2 flex justify-between border-t border-[color:var(--line)] pt-2 text-lg font-extrabold">
+                    <span>Gesamt</span>
+                    <span className="text-[color:var(--brand)]">{fmtPrice(total)}</span>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center justify-between border-t border-[color:var(--line)] pt-3 text-2xl font-extrabold">
+                  <span>Zu zahlen</span><span className="text-[color:var(--brand)]">{fmtPrice(total)}</span>
                 </div>
               </div>
               <div className="mt-6 flex gap-3">
@@ -371,7 +404,7 @@ export default function Checkout() {
                   className="flex-1 rounded-full border border-[color:var(--line)] py-2.5 font-bold text-sm hover:bg-gray-50">Zurück</button>
                 <button onClick={placeOrder} disabled={submitting}
                   className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-2.5 font-bold text-white hover:-translate-y-0.5 transition disabled:opacity-50">
-                  {submitting ? "Wird bearbeitet…" : `Jetzt kostenpflichtig bestellen – ${fmtPrice(total)}`}
+                  {submitting ? "Wird bearbeitet…" : "Jetzt kostenpflichtig bestellen"}
                 </button>
               </div>
             </div>

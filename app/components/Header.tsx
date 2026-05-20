@@ -8,6 +8,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import InfoIcon from "@mui/icons-material/Info";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import LoginIcon from "@mui/icons-material/Login";
+import LogoutIcon from "@mui/icons-material/Logout";
 import SearchIcon from "@mui/icons-material/Search";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -19,8 +20,26 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [customerName, setCustomerName] = useState<string | null>(null);
   const lastScrollY = useRef(0);
   const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("sw-customer-token");
+    setIsLoggedIn(!!token);
+    if (token) {
+      fetch("/api/customer/me")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data?.loggedIn) {
+            const name = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+            setCustomerName(name || data.email || null);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -52,6 +71,19 @@ export default function Header() {
 
     router.push(`/search?q=${encodeURIComponent(query)}`);
     setOpen(false);
+  }
+
+  async function handleLogout() {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+      localStorage.removeItem("sw-context-token");
+      localStorage.removeItem("sw-customer-token");
+      setIsLoggedIn(false);
+      setCustomerName(null);
+      router.push("/");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   }
 
   return (
@@ -111,9 +143,26 @@ export default function Header() {
           <Link href="/kontakt" className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(30,80,160,0.18)] hover:text-[#4f9eff]">
             <ContactMailIcon fontSize="small" /> Kontakt
           </Link>
-          <Link href="/anmelden" className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(120,50,160,0.18)] hover:text-[#b48aff]">
-            <LoginIcon fontSize="small" /> Konto
-          </Link>
+          {isLoggedIn && customerName ? (
+            <div className="flex items-center gap-2 rounded-full border border-[rgba(100,140,255,0.2)] bg-gradient-to-r from-[rgba(20,40,100,0.6)] to-[rgba(30,55,130,0.6)] px-3 py-1.5 text-[#c8d8f8] shadow-[0_2px_16px_rgba(0,0,0,0.25)]">
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7bb8ff]">Kunde</span>
+              <span className="h-3.5 w-px bg-[rgba(100,140,255,0.25)]" />
+              <span className="text-xs font-semibold text-[#dde4f0]">{customerName}</span>
+            </div>
+          ) : (
+            <Link href="/anmelden" className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(120,50,160,0.18)] hover:text-[#b48aff]">
+              <LoginIcon fontSize="small" /> Konto
+            </Link>
+          )}
+          {isLoggedIn && (
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(200,50,50,0.18)] hover:text-red-400"
+              title="Abmelden"
+            >
+              <LogoutIcon fontSize="small" />
+            </button>
+          )}
           <Link
             href={SHOPWARE_CART_URL}
             className="rounded-full border border-[rgba(100,140,255,0.2)] bg-gradient-to-r from-[rgba(20,40,100,0.6)] to-[rgba(30,55,130,0.6)] px-4 py-2 text-[#c8d8f8] shadow-[0_2px_16px_rgba(0,0,0,0.25)] transition duration-300 hover:-translate-y-0.5 hover:border-[#4f9eff] hover:text-[#7bb8ff]"
@@ -172,9 +221,25 @@ export default function Header() {
             <Link href="/kontakt" className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[rgba(30,60,160,0.18)]">
               <ContactMailIcon fontSize="small" /> Kontakt
             </Link>
-            <Link href="/anmelden" className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[rgba(30,60,160,0.18)]">
-              <LoginIcon fontSize="small" /> Konto
-            </Link>
+            {isLoggedIn && customerName ? (
+              <div className="mt-1 flex items-center gap-2 rounded-xl border border-[rgba(100,140,255,0.15)] bg-[rgba(20,40,100,0.3)] px-3 py-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7bb8ff]">Kunde</span>
+                <span className="h-3.5 w-px bg-[rgba(100,140,255,0.2)]" />
+                <span className="text-sm font-semibold text-[#dde4f0]">{customerName}</span>
+              </div>
+            ) : (
+              <Link href="/anmelden" className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[rgba(30,60,160,0.18)]">
+                <LoginIcon fontSize="small" /> Konto
+              </Link>
+            )}
+            {isLoggedIn && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-xl px-2 py-2 text-left transition hover:bg-[rgba(200,50,50,0.18)] hover:text-red-400"
+              >
+                <LogoutIcon fontSize="small" /> Abmelden
+              </button>
+            )}
             <Link
               href={SHOPWARE_CART_URL}
               className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] px-3 py-3 text-white"

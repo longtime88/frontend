@@ -72,10 +72,16 @@ export async function GET(request: Request) {
     }
 
     const cart = json as Record<string, unknown>;
+    // Shopware liefert lineItems als Array – in Record umwandeln
+    const rawItems = cart.lineItems;
+    const lineItemsRecord: Record<string, unknown> =
+      Array.isArray(rawItems)
+        ? Object.fromEntries(rawItems.map((it: Record<string, unknown>) => [String(it.id ?? ""), it]))
+        : (rawItems as Record<string, unknown>) || {};
     return NextResponse.json({
       ok: true,
       cart,
-      lineItems: cart.lineItems ?? {},
+      lineItems: lineItemsRecord,
       contextToken: contextToken || undefined,
       price: cart.price ?? {},
     });

@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react';
-import { addProductToShopwareCart, resolveShopwareProductId, addCustomCartItem } from '@/lib/shopwareCart';
+import { addProductToShopwareCart, resolveShopwareProductId, addCustomCartItem, getShopwareContextToken } from '@/lib/shopwareCart';
 import { useRouter } from "next/navigation";
 
 
@@ -25,35 +25,32 @@ export const Product: React.FC<ProductProps> = ({ product }) => {
   const router = useRouter();
   const productName = product.name || product.title || "Unbenanntes Produkt";
   const productImage = product.image
-    ? product.image.startsWith("/")
-      ? product.image
-      : `/${product.image}`
+    ? typeof product.image === "string" && product.image.startsWith("http")
+      ? product.image.trim()
+      : `/${(product.image as string).trim().replace(/^\/+/, "")}`
     : "/next.svg";
 
   const handleAddToCart = async () => {
     if (isAdding) return;
 
     const shopwareProductId = resolveShopwareProductId(product.id, product.shopwareProductId);
-    if (!shopwareProductId) {
-      alert(
-        "Dieses Produkt hat keine gueltige Shopware-Produkt-ID. " +
-          "Bitte in den Produktdaten `shopwareProductId` (32-stellige Hex-ID) hinterlegen."
-      );
-      return;
-    }
+    const customShopwareId = shopwareProductId || `custom:${String(product.id)}`;
 
     setIsAdding(true);
     try {
       addCustomCartItem({
         id: String(product.id),
-        shopwareId: shopwareProductId,
+        shopwareId: customShopwareId,
         name: productName,
         price: product.price ?? 0,
         image: productImage,
         quantity: 1,
       });
-      await addProductToShopwareCart(shopwareProductId, 1);
-      router.push("/Warenkorb");
+      if (shopwareProductId) {
+        await addProductToShopwareCart(shopwareProductId, 1);
+      }
+      // Zum eigenen Checkout weiterleiten
+      router.push("/Checkout");
     } catch (error) {
       console.error("Fehler beim Hinzufuegen zum Warenkorb:", error);
       alert("Fehler beim Hinzufuegen zum Warenkorb. Bitte versuche es erneut.");
@@ -69,6 +66,7 @@ export const Product: React.FC<ProductProps> = ({ product }) => {
           src={productImage}
           alt={productName}
           fill
+          unoptimized
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
@@ -98,7 +96,7 @@ export const Product: React.FC<ProductProps> = ({ product }) => {
           onClick={handleAddToCart}
           disabled={isAdding}
         >
-          {isAdding ? "Wird hinzugefügt..." : "In den Warenkorb"}
+          {isAdding ? "Wird hinzugefügt…" : "Bestellen"}
         </button>
       </div>
     </article>

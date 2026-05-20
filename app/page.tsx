@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import Category from "./components/Category";
-import { Products } from "./components/hello";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { getShopwareApiBase } from "@/lib/shopwareStorefront";
 
 type ProductItem = {
   id: string;
@@ -15,11 +15,33 @@ type ProductItem = {
 };
 
 async function getProducts(): Promise<ProductItem[]> {
+  const baseUrl = getShopwareApiBase();
+  const url = `${baseUrl}/store-api/product`;
+  const headers = { "sw-access-key": process.env.SHOPWARE_STORE_API_ACCESS_KEY || "" };
+
   try {
-    const res = await fetch(`${process.env.SHOPWARE_URL || "http://localhost:8000"}/store-api/product`, {
-      headers: { "sw-access-key": process.env.SHOPWARE_STORE_API_ACCESS_KEY || "" },
-      next: { revalidate: 60 },
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, { headers, next: { revalidate: 60 } });
+    } catch (error) {
+      const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
+      if (!allowSelfSigned || !url.startsWith("https://")) {
+        throw error;
+      }
+
+      const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      try {
+        res = await fetch(url, { headers, next: { revalidate: 60 } });
+      } finally {
+        if (previousTlsMode === undefined) {
+          delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+        } else {
+          process.env.NODE_TLS_REJECT_UNAUTHORIZED = previousTlsMode;
+        }
+      }
+    }
+
     const data = await res.json().catch(() => ({ elements: [] }));
     const items = (data.elements || []) as Array<Record<string, unknown>>;
     return items.map((raw) => {
@@ -27,11 +49,13 @@ async function getProducts(): Promise<ProductItem[]> {
         ? raw.translated as Record<string, unknown> : null;
       const price = (raw.calculatedPrice ?? raw.price) as Record<string, unknown> | undefined;
       const cover = raw.cover as Record<string, unknown> | null | undefined;
-      const media = raw.media as Array<Record<string, unknown>> | undefined;
-      const coverMedia = cover ?? (media && media[0]) ?? null;
-      const image = coverMedia
-        ? (coverMedia.url as string | undefined) ?? (coverMedia.previewImage as string | undefined) ?? ""
-        : "";
+      const coverMedia = (cover?.media as Record<string, unknown> | undefined) ?? null;
+      const image = String(
+        (coverMedia?.url as string | undefined) ??
+          (coverMedia?.thumbnails as Array<Record<string, unknown>> | undefined)?.[0]?.url ??
+          (cover?.url as string | undefined) ??
+          ""
+      ).trim();
       return {
         id: String(raw.id ?? ""),
         title: String(translated?.name ?? raw.name ?? ""),
@@ -91,10 +115,10 @@ export default async function Homepage() {
                   Jetzt shoppen
                 </Link>
                 <Link
-                  href="/Warenkorb"
+                  href="/Checkout"
                   className="rounded-full border border-[rgba(100,140,255,0.22)] bg-[rgba(16,28,56,0.6)] px-6 py-3 text-sm font-bold text-[#b0c4e8] transition duration-300 hover:-translate-y-0.5 hover:border-[#4f9eff] hover:text-[#7bb8ff]"
                 >
-                  Zum Warenkorb
+                  Zum Checkout
                 </Link>
               </div>
             </div>
@@ -105,6 +129,8 @@ export default async function Homepage() {
                 src="/images/Hintergrund.png"
                 alt="Premium Produkte"
                 fill
+                loading="eager"
+                sizes="(max-width: 1023px) 0px, 25vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,25,60,0.9)] to-transparent" />
@@ -154,6 +180,7 @@ export default async function Homepage() {
                     src={p.image || "/next.svg"}
                     alt={p.name}
                     fill
+                    unoptimized
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                   />
@@ -171,11 +198,18 @@ export default async function Homepage() {
                   <p className="line-clamp-2 text-xs text-[#7a8aaa]">
                     {p.description || "Direkt einsetzbares Digital-Produkt"}
                   </p>
-                  <div className="mt-auto pt-2">
-                    <p className="text-lg font-extrabold text-[#7bb8ff]">
-                      {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "Preis auf Anfrage"}
-                    </p>
-                  </div>
+                   <div className="mt-auto pt-2">
+                     <p className="text-lg font-extrabold text-[#7bb8ff]">
+                       {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "Preis auf Anfrage"}
+                     </p>
+                     <Link
+                       href={`/Checkout?product=${encodeURIComponent(p.id)}`}
+                       className="mt-2 block w-full rounded-full bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] py-2 text-center text-xs font-bold text-white shadow-md hover:-translate-y-0.5 transition"
+                       aria-label={`Bestellen: ${p.name}`}
+                     >
+                       Bestellen
+                     </Link>
+                   </div>
                 </div>
               </div>
             ))}

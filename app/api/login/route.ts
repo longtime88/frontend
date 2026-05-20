@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 
+function getShopwareUrl() {
+  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  return raw.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+}
+
 export async function POST(request: Request) {
   const accessKey =
     process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
@@ -28,32 +33,32 @@ export async function POST(request: Request) {
     );
   }
 
+  const baseUrl = getShopwareUrl();
+  const loginUrl = `${baseUrl}/store-api/account/login`;
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "sw-access-key": accessKey,
   };
 
   try {
-    const loginUrl = "/store-api/account/login";
-    const fetchOptions: RequestInit = {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ email, password }),
-      cache: "no-store",
-    };
+    const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
+    const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+    
+    if (allowSelfSigned) {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    }
 
     let upstream: Response;
-
     try {
-      upstream = await fetch(loginUrl, fetchOptions);
-    } catch (error) {
-      const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
-      if (!allowSelfSigned) throw error;
-      const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      try {
-        upstream = await fetch(loginUrl, fetchOptions);
-      } finally {
+      upstream = await fetch(loginUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ email, password }),
+        cache: "no-store",
+      });
+    } finally {
+      if (allowSelfSigned) {
         if (previousTlsMode === undefined) {
           delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
         } else {
@@ -110,7 +115,8 @@ export async function POST(request: Request) {
     }
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error("Login error:", error);
     return NextResponse.json(
       { error: "Shopware Login API ist nicht erreichbar." },
       { status: 502 }

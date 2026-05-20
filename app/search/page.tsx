@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { addProductToShopwareCart } from "@/lib/shopwareCart";
-import { SHOPWARE_CART_URL } from "@/lib/shopwareStorefront";
+import { useRouter } from "next/navigation";
 
 type SearchProduct = {
   id: string;
@@ -16,6 +16,7 @@ type SearchProduct = {
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const query = searchParams.get("q") || "";
   const [results, setResults] = useState<SearchProduct[]>([]);
   const [addingProductId, setAddingProductId] = useState("");
@@ -47,7 +48,7 @@ function SearchContent() {
     setAddingProductId(productId);
     try {
       await addProductToShopwareCart(productId, 1);
-      window.location.href = SHOPWARE_CART_URL;
+      router.push(`/Checkout?product=${encodeURIComponent(productId)}`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Produkt konnte nicht in den Warenkorb gelegt werden.";
@@ -104,7 +105,7 @@ function SearchContent() {
               onClick={() => handleAddToCart(product.id)}
               disabled={addingProductId === product.id}
             >
-              {addingProductId === product.id ? "Wird hinzugefuegt..." : "In den Warenkorb"}
+              {addingProductId === product.id ? "Wird hinzugefuegt..." : "Zum Checkout"}
             </button>
           </article>
         ))}

@@ -17,7 +17,7 @@
       "category": "template",
       "price": 129.00,
       "image": "images/Luna.jpg",
-      "shopwareProductId": ""
+      "shopwareProductId": "019e2de949007a5696a87b5a06667a0e"
     },
     {
       "id": 3,
@@ -25,7 +25,7 @@
       "description": "60 Minuten Pair Session für Architektur, Plugin-Setup und Go-Live-Checkliste.",
       "category": "mentoring",
       "price": 149.00,
-      "shopwareProductId": ""
+      "shopwareProductId": "019e2de949007a5696a87b5a06667a0e"
     },
     {
       "id": 4,
@@ -34,7 +34,7 @@
       "category": "plugin",
       "price": 99.00,
       "image": "images/Hintergrund.png",
-      "shopwareProductId": ""
+      "shopwareProductId": "019e2de949007a5696a87b5a06667a0e"
     }
   ]
 }

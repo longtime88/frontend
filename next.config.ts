@@ -4,6 +4,16 @@ const rawBackendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
 const BACKEND_API_BASE = rawBackendApiUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "http", hostname: "localhost", port: "" },
+      { protocol: "https", hostname: "localhost", port: "" },
+      { protocol: "http", hostname: "localhost", port: "8000" },
+      { protocol: "https", hostname: "localhost", port: "8000" },
+      { protocol: "http", hostname: "127.0.0.1", port: "8000" },
+      { protocol: "https", hostname: "127.0.0.1", port: "8000" },
+    ],
+  },
   /**
    * Proxy selected frontend calls to the backend API.
    * This avoids CORS issues: the browser always talks to the same origin
@@ -24,4 +34,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-

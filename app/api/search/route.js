@@ -14,28 +14,37 @@ export async function GET(request) {
     );
   }
 
-  try {
-    const searchUrl = "/store-api/search";
-    const fetchOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "sw-access-key": accessKey,
-      },
-      body: JSON.stringify({ search: q }),
-      cache: "no-store",
-    };
+  const baseUrl = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  const cleanUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+  const searchUrl = `${cleanUrl}/store-api/search`;
 
+  try {
     let response;
     try {
-      response = await fetch(searchUrl, fetchOptions);
+      response = await fetch(searchUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "sw-access-key": accessKey,
+        },
+        body: JSON.stringify({ search: q }),
+        cache: "no-store",
+      });
     } catch (error) {
       const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
       if (!allowSelfSigned) throw error;
       const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       try {
-        response = await fetch(searchUrl, fetchOptions);
+        response = await fetch(searchUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "sw-access-key": accessKey,
+          },
+          body: JSON.stringify({ search: q }),
+          cache: "no-store",
+        });
       } finally {
         if (previousTlsMode === undefined) {
           delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;

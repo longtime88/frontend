@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getShopwareApiBase } from "@/lib/shopwareStorefront";
 
 function getEnv() {
   const key = process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY;
@@ -12,17 +13,21 @@ function makeHeaders(): Record<string, string> {
   return headers;
 }
 
-async function shopwareFetch(url: string, options: RequestInit): Promise<{ json: unknown; response: Response }> {
+async function shopwareFetch(path: string, options: RequestInit): Promise<{ json: unknown; response: Response }> {
+  const baseUrl = getShopwareApiBase();
+  const url = `${baseUrl}/store-api${path}`;
+  const headers = makeHeaders();
+  
   let resp: Response;
   try {
-    resp = await fetch(url, options);
+    resp = await fetch(url, { ...options, headers });
   } catch {
     if (process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true") {
-      const https = url.startsWith("https://") ? url : url.replace(/^http:\/\//i, "https://");
+      const httpsUrl = url.replace(/^http:\/\//i, "https://");
       const prev = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       try {
-        resp = await fetch(https, options);
+        resp = await fetch(httpsUrl, { ...options, headers });
       } finally {
         if (prev === undefined) {
           delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
@@ -45,10 +50,8 @@ export async function GET() {
   }
 
   try {
-    const headers = makeHeaders();
-    const { json, response } = await shopwareFetch("/store-api/product?limit=100", {
+    const { json, response } = await shopwareFetch("/product?limit=100", {
       method: "GET",
-      headers,
       cache: "no-store",
     });
 
@@ -72,11 +75,13 @@ export async function GET() {
         ?? raw.price as Record<string, unknown> | undefined;
 
       const cover = raw.cover as Record<string, unknown> | null | undefined;
-      const media = raw.media as Array<Record<string, unknown>> | undefined;
-      const coverMedia = cover ?? (media && media[0]) ?? null;
-      const image = coverMedia
-        ? (coverMedia.url as string | undefined) ?? (coverMedia.previewImage as string | undefined) ?? ""
-        : "";
+      const coverMedia = (cover?.media as Record<string, unknown> | undefined) ?? null;
+      const image = String(
+        (coverMedia?.url as string | undefined) ??
+          (coverMedia?.thumbnails as Array<Record<string, unknown>> | undefined)?.[0]?.url ??
+          (cover?.url as string | undefined) ??
+          ""
+      );
 
       return {
         id: raw.id ?? "",

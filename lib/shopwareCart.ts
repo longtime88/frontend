@@ -81,7 +81,10 @@ export function getCustomCartItems(): CustomCartItem[] {
 
 export function removeCustomCartItem(id: string): void {
   if (typeof window === "undefined") return;
-  const items = getCustomCartItems().filter((i) => i.id !== id);
+  const normalizedId = id.startsWith("custom:") ? id.slice("custom:".length) : id;
+  const items = getCustomCartItems().filter(
+    (i) => i.id !== id && i.id !== normalizedId && i.shopwareId !== id
+  );
   localStorage.setItem(CUSTOM_CART_KEY, JSON.stringify(items));
 }
 
@@ -118,18 +121,30 @@ export function mergeCartWithCustom(
     if (refId) byShopware.set(refId, lineId);
   }
 
-  for (const custom of uniqueCustom) {
-    if (byShopware.has(custom.shopwareId)) {
-      const existing = mergedMap.get(byShopware.get(custom.shopwareId)!)!;
-      mergedMap.set(byShopware.get(custom.shopwareId)!, {
-        ...existing,
-        label: custom.name,
-        price: { totalPrice: custom.price * 100 },
-        cover: { media: { url: custom.image, translated: { alt: custom.name } } },
-        quantity: custom.quantity,
-      });
-    }
-  }
+   for (const custom of uniqueCustom) {
+     if (byShopware.has(custom.shopwareId)) {
+       const existing = mergedMap.get(byShopware.get(custom.shopwareId)!)!;
+       mergedMap.set(byShopware.get(custom.shopwareId)!, {
+         ...existing,
+         label: custom.name,
+         price: { totalPrice: custom.price * 100 },
+         priceTotal: custom.price * custom.quantity * 100,
+         cover: { media: { url: custom.image, translated: { alt: custom.name } } },
+         quantity: custom.quantity,
+       });
+     } else {
+       const syntheticId = `custom:${custom.id}`;
+       mergedMap.set(syntheticId, {
+         id: syntheticId,
+         referencedId: custom.shopwareId,
+         label: custom.name,
+         quantity: custom.quantity,
+         priceTotal: custom.price * custom.quantity * 100,
+         price: { totalPrice: custom.price * custom.quantity * 100 },
+         cover: { media: { url: custom.image, translated: { alt: custom.name } } },
+       });
+     }
+   }
 
   // Finale Dedup: Falls mehrere Shopware-lineItems die gleiche referencedId tragen,
   // behalte nur den ersten pro referencedId.
@@ -147,35 +162,75 @@ export function mergeCartWithCustom(
 
 // ─── Shopware Warenkorb (API) ─────────────────────────────────
 
+// Serielle Warteschlange: verhindert "concurrent write" Sperrungen in Shopware
+const cartQueue: Array<() => Promise<void>> = [];
+let cartBusy = false;
+async function runCartQueue(): Promise<void> {
+  if (cartBusy) return;
+  cartBusy = true;
+  while (cartQueue.length > 0) {
+    const task = cartQueue.shift()!;
+    try {
+      await task();
+    } catch { /* schon in caller behandelt */ }
+  }
+  cartBusy = false;
+}
+function enqueueCart(task: () => Promise<void>): Promise<void> {
+  cartQueue.push(task);
+  return runCartQueue();
+}
+
 export async function addProductToShopwareCart(productId: string, quantity = 1): Promise<void> {
-  const contextToken = getShopwareContextToken();
+  return enqueueCart(async () => {
+    const contextToken = getShopwareContextToken();
+    const previousToken = contextToken || "";
 
-  const response = await fetch("/api/cart/add", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ productId, quantity, contextToken: contextToken || undefined }),
+    const response = await fetch("/api/cart/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId, quantity, contextToken: contextToken || undefined }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data?.error || `Add-to-cart fehlgeschlagen (HTTP ${response.status}).`);
+    }
+
+    // Token aus Response oder Cookie zurückholen und speichern
+    const returnedToken =
+      (typeof data?.contextToken === "string" && data.contextToken) ||
+      (typeof data?.token === "string" && data.token) ||
+      previousToken;
+
+    if (returnedToken) {
+      setShopwareContextToken(returnedToken);
+    }
+
+    // Kurze Pause, bis Shopware den Write abgeschlossen hat
+    await new Promise(resolve => setTimeout(resolve, 300));
   });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data?.error || `Add-to-cart fehlgeschlagen (HTTP ${response.status}).`);
-  }
-  if (typeof data?.contextToken === "string" && data.contextToken.length > 0) {
-    setShopwareContextToken(data.contextToken);
-  }
 }
 
 export async function removeProductFromShopwareCart(itemId: string): Promise<void> {
-  const contextToken = getShopwareContextToken();
+  return enqueueCart(async () => {
+    const contextToken = getShopwareContextToken();
 
-  const response = await fetch("/api/cart/remove", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ itemId, contextToken: contextToken || undefined }),
+    const response = await fetch("/api/cart/remove", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId, contextToken: contextToken || undefined }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data?.error || `Entfernen fehlgeschlagen (HTTP ${response.status}).`);
+    }
+
+    if (data.contextToken && typeof window !== "undefined") {
+      localStorage.setItem("sw-context-token", data.contextToken);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 300));
   });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data?.error || `Entfernen fehlgeschlagen (HTTP ${response.status}).`);
-  }
 }
