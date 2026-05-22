@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react';
-import { addProductToShopwareCart, resolveShopwareProductId, addCustomCartItem, getShopwareContextToken } from '@/lib/shopwareCart';
+import { addProductToShopwareCart, resolveShopwareProductId, addCustomCartItem } from '@/lib/shopwareCart';
 import { useRouter } from "next/navigation";
 
 

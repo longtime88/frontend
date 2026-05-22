@@ -20,7 +20,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "DevPortfolio Shop",
+  title: "Molinka Shop",
   description: "Portfolio und digitaler Produktverkauf für Webentwicklung",
   manifest: "./app/manifest.json",
   
@@ -38,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className={`${manrope.variable} ${fraunces.variable} flex min-h-screen flex-col antialiased`}>
+      <body suppressHydrationWarning className={`${manrope.variable} ${fraunces.variable} flex min-h-screen flex-col antialiased`}>
         <Header />
         <main className="mx-auto w-full flex-1">{children}</main>
         <Footer />

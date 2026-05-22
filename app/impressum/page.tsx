@@ -15,7 +15,7 @@ export default function ImpressumPage() {
           <p>
             Max Mustermann
             <br />
-            DevPortfolio Studio
+            Molinka Studio
             <br />
             Musterstrasse 1
             <br />

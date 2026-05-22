@@ -99,7 +99,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const data = await upstream.json().catch(() => ({}));
+    const rawText = await upstream.text().catch(() => "(no body)");
+    const data = (() => { try { return JSON.parse(rawText); } catch { return {}; } })();
     const nextContextToken =
       upstream.headers.get("sw-context-token") ||
       (typeof data?.token === "string" ? data.token : "");
@@ -107,7 +108,11 @@ export async function POST(request: Request) {
     if (!upstream.ok) {
       return NextResponse.json(
         {
-          error: data?.errors?.[0]?.detail || data?.errors?.[0]?.title || "Add-to-cart fehlgeschlagen.",
+          error:
+            (data?.errors?.[0]?.detail ||
+              data?.errors?.[0]?.title ||
+              (typeof data === "object" ? JSON.stringify(data) : "") ||
+              `Add-to-cart fehlgeschlagen (HTTP ${upstream.status}).`),
           details: data,
           contextToken: nextContextToken || undefined,
         },

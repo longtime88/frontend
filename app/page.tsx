@@ -85,58 +85,61 @@ export default async function Homepage() {
   return (
     <>
       {/* Amazon-style Hero Banner */}
-      <section className="relative overflow-hidden border-b border-[rgba(100,140,255,0.15)]">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[rgba(15,25,60,0.8)] via-[rgba(20,40,90,0.6)] to-[rgba(15,30,70,0.8)]" />
-        
-        <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {/* Main Banner */}
-            <div className="glass-card relative rounded-2xl p-6 md:col-span-2 lg:col-span-3">
-              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[rgba(40,80,200,0.15)] blur-3xl" />
-              
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#5a8fbf]">
-                Entdecken Sie unsere Leistungen
+      <section className="relative bg-[color:var(--bg)] py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
+            {/* Main Content */}
+            <div className="flex-1 space-y-6">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">
+                Willkommen bei unserem Digital Store
               </p>
               
-              <h1 className="relative z-10 max-w-2xl text-3xl font-bold leading-tight tracking-[0.02em] text-white [font-family:var(--font-fraunces)] md:text-4xl">
-                Portfolio &amp; Digital Produkte für moderne Webseiten
+              <h1 className="text-4xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-5xl lg:text-6xl">
+                Digitale Produkte für Profis<br />
+                <span className="block mt-2 text-[color:var(--brand-light)]">
+                  Sofort downloadbar & sofort einsetzbar
+                </span>
               </h1>
               
-              <p className="relative z-10 mt-4 max-w-xl text-base leading-relaxed text-[#8892b0] md:text-lg">
-                Professionelle Websites, digitale Produkte und Tools für Ihren Online-Auftritt.
-                Sofort verfügbar für alle gängigen Plattformen.
+              <p className="text-base text-[color:var(--muted)] max-w-2xl">
+                Entdecken Sie hochwertige digitale Produkte, Plugins und Tools für Ihre Webprojekte.
+                Alles sofort verfügbar nach Kauf - kein Warten, kein Versand.
               </p>
               
-              <div className="relative z-10 mt-6 flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-4 mt-6">
                 <Link
                   href="#produkte"
-                  className="rounded-full bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] px-6 py-3 text-sm font-bold tracking-wide text-white transition duration-300 hover:-translate-y-0.5 hover:brightness-110"
+                  className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] text-[color:var(--ink)] font-semibold text-sm rounded-full hover:-translate-y-0.5 transition-all duration-300 shadow-lg hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)]"
                 >
                   Jetzt shoppen
                 </Link>
                 <Link
                   href="/Checkout"
-                  className="rounded-full border border-[rgba(100,140,255,0.22)] bg-[rgba(16,28,56,0.6)] px-6 py-3 text-sm font-bold text-[#b0c4e8] transition duration-300 hover:-translate-y-0.5 hover:border-[#4f9eff] hover:text-[#7bb8ff]"
+                  className="flex items-center justify-center px-6 py-3 border border-[color:var(--line)] bg-[color:var(--surface)] text-[color:var(--ink)] font-semibold text-sm rounded-full hover:-translate-y-0.5 transition-all duration-300 hover:bg-[color:var(--surface-subtle)] hover:border-[color:var(--brand)]"
                 >
                   Zum Checkout
                 </Link>
               </div>
             </div>
-
-            {/* Side Banner */}
-            <div className="glass-card relative hidden overflow-hidden rounded-2xl lg:block">
-              <Image
-                src="/images/Hintergrund.png"
-                alt="Premium Produkte"
-                fill
-                loading="eager"
-                sizes="(max-width: 1023px) 0px, 25vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,25,60,0.9)] to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#38c8e0]">Premium</p>
-                <p className="mt-1 text-sm font-semibold text-white">Exklusive Produkte</p>
+            
+            {/* Featured Product/Image */}
+            <div className="flex-shrink-0 w-[300px] hidden md:block">
+              <div className="aspect-[4/3] w-full rounded-xl overflow-hidden glass-card">
+                <Image
+                  src="/images/Hintergrund.png"
+                  alt="Featured Product"
+                  fill
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,25,60,0.7)] to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 text-center">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">
+                    Featured
+                  </p>
+                  <p className="mt-1 text-[color:var(--ink)] font-semibold [font-family:var(--font-fraunces)]">
+                    Premium Digital Product
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -144,76 +147,147 @@ export default async function Homepage() {
       </section>
 
       {/* Deals Banner */}
-      <section className="border-b border-[rgba(100,140,255,0.1)] bg-[rgba(15,25,50,0.4)] py-3">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <section className="border-b border-[color:var(--line)] bg-[color:var(--surface)] py-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 text-sm">
-            <span className="font-bold text-[#f59e0b]">Deal des Tages</span>
-            <span className="text-[#8892b0]">Bis zu 30% Rabatt auf ausgewählte Produkte</span>
+            <span className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-[color:var(--brand)] rounded-full" />
+              <span className="font-semibold text-[color:var(--brand-light)]">Deal des Tages</span>
+            </span>
+            <span className="text-[color:var(--muted)]">Bis zu 30% Rabatt auf ausgewählte Produkte</span>
+            <span className="ml-auto text-[color:var(--muted)]">Nur heute verfügbar</span>
           </div>
         </div>
       </section>
 
       {/* Categories */}
-      <section className="border-b border-[rgba(100,140,255,0.1)] py-6">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <Category />
-        </div>
-      </section>
-
-      {/* Products Grid - Amazon Style */}
-      <section id="produkte" className="py-8">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
+      <section className="border-b border-[color:var(--line)] py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#5a8fbf]">Sortiment</p>
-              <h2 className="text-2xl font-bold tracking-[0.02em] text-white [font-family:var(--font-fraunces)] md:text-3xl">
-                Digitale Bestseller
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">
+                Kategorien
+              </p>
+              <h2 className="text-2xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-3xl">
+                Entdecken Sie unsere Produktkategorien
               </h2>
             </div>
           </div>
           
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((p) => (
-              <div key={p.id} className="glass-card flex flex-col overflow-hidden rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-glow">
-                <div className="relative aspect-square overflow-hidden bg-[rgba(15,30,70,0.45)]">
-                  <Image
-                    src={p.image || "/next.svg"}
-                    alt={p.name}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                  />
-                  {p.price && (
-                    <span className="absolute left-2 top-2 rounded bg-[rgba(0,0,0,0.7)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#f59e0b]">
-                      Sale
-                    </span>
-                  )}
-                </div>
-                
-                <div className="flex flex-1 flex-col gap-2 p-3">
-                  <h3 className="line-clamp-2 text-sm font-semibold text-white [font-family:var(--font-fraunces)]">
-                    {p.name}
-                  </h3>
-                  <p className="line-clamp-2 text-xs text-[#7a8aaa]">
-                    {p.description || "Direkt einsetzbares Digital-Produkt"}
-                  </p>
-                   <div className="mt-auto pt-2">
-                     <p className="text-lg font-extrabold text-[#7bb8ff]">
-                       {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "Preis auf Anfrage"}
-                     </p>
-                     <Link
-                       href={`/Checkout?product=${encodeURIComponent(p.id)}`}
-                       className="mt-2 block w-full rounded-full bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] py-2 text-center text-xs font-bold text-white shadow-md hover:-translate-y-0.5 transition"
-                       aria-label={`Bestellen: ${p.name}`}
-                     >
-                       Bestellen
-                     </Link>
-                   </div>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              { id: 1, name: "Shopware Plugins", products: ["Checkout Erweiterung", "Custom CMS Blocks", "B2B Features"], icon: "🧩" },
+              { id: 2, name: "Frontend Templates", products: ["Landingpage Kits", "Next.js Storefront UI", "Responsive Components"], icon: "🎨" },
+              { id: 3, name: "Automation", products: ["API Integrationen", "ERP Sync", "Lead Workflows"], icon: "⚙️" },
+              { id: 4, name: "Mentoring", products: ["Code Review", "Pair Programming", "Tech Setup Sessions"], icon: "👨‍🏫" }
+            ].map((cat) => (
+              <div key={cat.id} className="glass-card group flex-1 flex-col rounded-xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-glow">
+                <div className="mb-4 text-2xl">{cat.icon}</div>
+                <h3 className="mb-3 text-xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
+                  {cat.name}
+                </h3>
+                <p className="mb-4 text-[color:var(--muted)] text-sm line-clamp-3">
+                  Entdecken Sie unsere {cat.name.toLowerCase()} für professionelle Webprojekte
+                </p>
+                <div className="mt-auto pt-4">
+                  <Link
+                    href="#"
+                    className="flex items-center gap-2 text-[color:var(--brand)] font-medium text-sm hover:text-[color:var(--brand-light)] transition-colors"
+                  >
+                    Mehr anzeigen
+                    <span className="ml-1">→</span>
+                  </Link>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Products Grid - Amazon Style */}
+      <section id="produkte" className="py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">
+                Produkte
+              </p>
+              <h2 className="text-3xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-4xl">
+                Digitale Bestseller
+              </h2>
+            </div>
+            <Link
+              href="#"
+              className="text-[color:var(--muted)] hover:text-[color:var(--brand)] transition-colors text-sm"
+            >
+              Alle Produkte ansehen →
+            </Link>
+          </div>
+          
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {products.map((p) => (
+              <div key={p.id} className="group glass-card flex flex-col overflow-hidden rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)] hover:shadow-glow">
+                <div className="relative aspect-[4/3] w-full overflow-hidden">
+                  <Image
+                    src={p.image || "/next.svg"}
+                    alt={p.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  />
+                  {/* Sale Badge */}
+                  {p.price && (
+                    <span className="absolute left-3 top-3 rounded bg-[color:var(--brand)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[color:var(--ink)]">
+                      Sale
+                    </span>
+                  )}
+                  {/* Out of Stock Badge - placeholder */}
+                  {/* {p.stock === 0 && (
+                    <span className="absolute left-3 top-3 rounded bg-[color:var(--red)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[color:var(--ink)]">
+                      Ausverkauft
+                    </span>
+                  )} */}
+                </div>
+                
+                <div className="flex flex-1 flex-col gap-3 p-4">
+                  <div className="flex-1">
+                    <h3 className="mb-2 line-clamp-2 text-[color:var(--ink)] font-semibold text-lg [font-family:var(--font-fraunces)] hover:text-[color:var(--brand-light)] transition-colors">
+                      {p.name}
+                    </h3>
+                    <p className="text-[color:var(--muted)] text-sm line-clamp-3">
+                      {p.description || "Direkt einsetzbares Digital-Produkt"}
+                    </p>
+                  </div>
+                  
+                  <div className="mt-auto pt-4">
+                    <div className="mb-2 flex items-baseline gap-2">
+                      <p className="text-[color:var(--muted)] line-through text-xs">
+                        {/* Original price if on sale - placeholder */}
+                        {/* {p.originalPrice ? `${p.originalPrice.toFixed(2)} €` : ""} */}
+                      </p>
+                      <p className="text-xl font-extrabold text-[color:var(--brand-light)]">
+                        {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "Preis auf Anfrage"}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/Checkout?product=${encodeURIComponent(p.id)}`}
+                      className="w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-5 py-2 text-center text-[color:var(--ink)] font-medium text-sm shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)]"
+                      aria-label={`Bestellen: ${p.name}`}
+                    >
+                      In den Warenkorb
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Show message if no products */}
+          {products.length === 0 && (
+            <div className="py-12 text-center text-[color:var(--muted)]">
+              <p>Keine Produkte verfügbar.</p>
+            </div>
+          )}
         </div>
       </section>
 

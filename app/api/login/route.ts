@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let payload: { email?: string; password?: string };
+  let payload: { email?: string; password?: string; contextToken?: string };
   try {
     payload = await request.json();
   } catch {
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
 
   const email = String(payload.email ?? "").trim();
   const password = String(payload.password ?? "");
+  const contextToken = String(payload.contextToken ?? "").trim();
 
   if (!email || !password) {
     return NextResponse.json(
@@ -40,6 +41,9 @@ export async function POST(request: Request) {
     "Content-Type": "application/json",
     "sw-access-key": accessKey,
   };
+  if (contextToken) {
+    headers["sw-context-token"] = contextToken;
+  }
 
   try {
     const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
@@ -92,6 +96,8 @@ export async function POST(request: Request) {
       ok: true,
       message: "Login erfolgreich!",
       customer: data?.customer || null,
+      contextToken: contextToken || undefined,
+      customerToken: customerToken || undefined,
     });
 
     if (contextToken) {

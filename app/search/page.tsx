@@ -2,12 +2,13 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { addProductToShopwareCart } from "@/lib/shopwareCart";
+import { addProductToShopwareCart, addCustomCartItem, resolveShopwareProductId } from "@/lib/shopwareCart";
 import { useRouter } from "next/navigation";
 
 type SearchProduct = {
   id: string;
   name: string;
+  price?: number;        // unitPrice in EUR (Shopware store-api)
   calculatedPrice?: {
     totalPrice?: number;
     unitPrice?: number;
@@ -44,11 +45,33 @@ function SearchContent() {
     load();
   }, [query]);
 
-  const handleAddToCart = async (productId: string) => {
-    setAddingProductId(productId);
+  const handleAddToCart = async (product: SearchProduct) => {
+    setAddingProductId(product.id);
     try {
-      await addProductToShopwareCart(productId, 1);
-      router.push(`/Checkout?product=${encodeURIComponent(productId)}`);
+      const shopwareId = resolveShopwareProductId(product.id);
+      const customId = shopwareId || `custom:${product.id}`;
+
+      // Preis ermitteln (preferiert unitPrice als EUR, fallback 0)
+      const price =
+        typeof product.calculatedPrice?.unitPrice === "number"
+          ? product.calculatedPrice.unitPrice / 100
+          : typeof product.price === "number"
+            ? product.price
+            : 0;
+
+      // Im Custom-Cart (Name + Preis) und im Shopware-Cart speichern
+      addCustomCartItem({
+        id: product.id,
+        shopwareId: customId,
+        name: product.name,
+        price,
+        image: "/next.svg",
+        quantity: 1,
+      });
+      if (shopwareId) {
+        await addProductToShopwareCart(shopwareId, 1);
+      }
+      router.push(`/Checkout?product=${encodeURIComponent(product.id)}`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Produkt konnte nicht in den Warenkorb gelegt werden.";
@@ -94,15 +117,15 @@ function SearchContent() {
             <h3 className="text-xl font-semibold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
               {product.name}
             </h3>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
-              {typeof product.calculatedPrice?.unitPrice === "number"
-                ? `${product.calculatedPrice.unitPrice.toFixed(2)} €`
-                : "Preis auf Anfrage"}
-            </p>
+<p className="mt-2 text-sm text-[color:var(--muted)]">
+                   {typeof product.calculatedPrice?.unitPrice === "number"
+                     ? `${(product.calculatedPrice.unitPrice / 100).toFixed(2)} €`
+                     : "Preis auf Anfrage"}
+                 </p>
             <button
               type="button"
               className="mt-5 inline-flex items-center rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2 text-sm font-bold text-white transition duration-300 hover:-translate-y-0.5 hover:from-[color:var(--brand-deep)] hover:to-[#c05d2b] disabled:opacity-60"
-              onClick={() => handleAddToCart(product.id)}
+              onClick={() => handleAddToCart(product)}
               disabled={addingProductId === product.id}
             >
               {addingProductId === product.id ? "Wird hinzugefuegt..." : "Zum Checkout"}

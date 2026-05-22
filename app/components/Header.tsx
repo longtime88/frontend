@@ -20,26 +20,17 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Read initial login state from localStorage without a useEffect.
+  // `"use client"` ensures this code only runs on the client.
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !!localStorage.getItem("sw-customer-token");
+    }
+    return false;
+  });
   const [customerName, setCustomerName] = useState<string | null>(null);
   const lastScrollY = useRef(0);
   const router = useRouter();
-
-  useEffect(() => {
-    const token = localStorage.getItem("sw-customer-token");
-    setIsLoggedIn(!!token);
-    if (token) {
-      fetch("/api/customer/me")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (data?.loggedIn) {
-            const name = `${data.firstName || ""} ${data.lastName || ""}`.trim();
-            setCustomerName(name || data.email || null);
-          }
-        })
-        .catch(() => {});
-    }
-  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -105,7 +96,7 @@ export default function Header() {
         {/* Logo */}
         <Link href="/" className="group shrink-0">
           <p className="bg-gradient-to-r from-[#7bb8ff] via-[#4f9eff] to-[#38c8e0] bg-clip-text text-xl font-bold tracking-[0.02em] text-transparent transition brightness-110 group-hover:brightness-130 [font-family:var(--font-fraunces)]">
-            DevPortfolio
+            Molinka
           </p>
           <p className="text-[9px] font-semibold tracking-[0.14em] text-[#5a7090]">
             WEB DEVELOPER STUDIO

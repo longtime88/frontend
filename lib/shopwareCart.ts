@@ -166,15 +166,18 @@ export function mergeCartWithCustom(
 const cartQueue: Array<() => Promise<void>> = [];
 let cartBusy = false;
 async function runCartQueue(): Promise<void> {
-  if (cartBusy) return;
+  if (cartBusy) return; // bereits aktiv, neuer Aufrufer warte via Promise-Kette
   cartBusy = true;
-  while (cartQueue.length > 0) {
-    const task = cartQueue.shift()!;
-    try {
-      await task();
-    } catch { /* schon in caller behandelt */ }
+  try {
+    while (cartQueue.length > 0) {
+      const task = cartQueue.shift()!;
+      try {
+        await task();
+      } catch { /* Fehler wird bereits im Caller behandelt */ }
+    }
+  } finally {
+    cartBusy = false;
   }
-  cartBusy = false;
 }
 function enqueueCart(task: () => Promise<void>): Promise<void> {
   cartQueue.push(task);
@@ -182,6 +185,7 @@ function enqueueCart(task: () => Promise<void>): Promise<void> {
 }
 
 export async function addProductToShopwareCart(productId: string, quantity = 1): Promise<void> {
+  const normalizedProductId = normalizeShopwareId(productId.trim());
   return enqueueCart(async () => {
     const contextToken = getShopwareContextToken();
     const previousToken = contextToken || "";
@@ -189,7 +193,7 @@ export async function addProductToShopwareCart(productId: string, quantity = 1):
     const response = await fetch("/api/cart/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId, quantity, contextToken: contextToken || undefined }),
+      body: JSON.stringify({ productId: normalizedProductId, quantity, contextToken: contextToken || undefined }),
     });
 
     const data = await response.json().catch(() => ({}));

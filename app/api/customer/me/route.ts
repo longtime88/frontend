@@ -24,7 +24,7 @@ export async function GET() {
   }
 
   const baseUrl = getShopwareUrl();
-  const accountUrl = `${baseUrl}/store-api/account/account-informations`;
+  const accountUrl = `${baseUrl}/store-api/account/customer`;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

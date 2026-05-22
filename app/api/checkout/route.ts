@@ -1,4 +1,18 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+
+const CHECKOUT_DEBUG = process.env.CHECKOUT_DEBUG === "true";
+
+function maskToken(token: string): string {
+  if (!token) return "";
+  if (token.length <= 8) return "***";
+  return `${token.slice(0, 4)}...${token.slice(-4)}`;
+}
+
+function logCheckout(event: string, details: Record<string, unknown>): void {
+  if (!CHECKOUT_DEBUG) return;
+  console.info(`[checkout-debug] ${event}`, details);
+}
 
 function getBaseUrl() {
   const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
@@ -107,10 +121,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ungueltiger JSON-Body." }, { status: 400 });
   }
 
-  const contextToken = String(payload.contextToken ?? "").trim();
+  const cookieStore = await cookies();
+  const cookieContextToken = cookieStore.get("sw-context-token")?.value || "";
+  const cookieCustomerToken = cookieStore.get("sw-customer-token")?.value || "";
+
+  const payloadContextToken = String(payload.contextToken ?? "").trim();
+  const contextToken = payloadContextToken || cookieContextToken;
   const shippingAddress = payload.shippingAddress || {};
   const billingAddress = payload.billingAddress || {};
   const paymentMethod = String(payload.paymentMethod ?? "").trim();
+  const shippingMethod = String(payload.shippingMethod ?? "").trim();
+  const lineItems = Array.isArray(payload.lineItems) ? payload.lineItems : [];
+
+  logCheckout("request-received", {
+    hasContextToken: Boolean(contextToken),
+    contextToken: maskToken(contextToken),
+    hasCustomerToken: Boolean(cookieCustomerToken),
+    lineItemsCount: lineItems.length,
+    lineItems: lineItems.map((item: Record<string, unknown>) => ({
+      type: String(item.type ?? ""),
+      referencedId: String(item.referencedId ?? "").slice(0, 8),
+      quantity: Number(item.quantity ?? 0),
+    })),
+    paymentMethod: paymentMethod ? paymentMethod.slice(0, 8) : "",
+    shippingMethod: shippingMethod ? shippingMethod.slice(0, 8) : "",
+    hasShippingAddress: Boolean(shippingAddress?.firstName || shippingAddress?.lastName || shippingAddress?.street),
+    hasBillingAddress: Boolean(billingAddress?.firstName || billingAddress?.lastName || billingAddress?.street),
+  });
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -118,12 +155,13 @@ export async function POST(request: Request) {
   };
 
   if (contextToken) headers["sw-context-token"] = contextToken;
+  if (cookieCustomerToken) headers["sw-customer-token"] = cookieCustomerToken;
 
   try {
     const countryId = shippingAddress.countryId || billingAddress.countryId || "f3e1b85c74df4e8fae2f3ef2da38e44f";
 
     const body = {
-      lineItems: payload.lineItems || [],
+      lineItems,
       shippingAddress: {
         firstName: shippingAddress.firstName || "",
         lastName: shippingAddress.lastName || "",
@@ -147,7 +185,7 @@ export async function POST(request: Request) {
         company: billingAddress.company || "",
       },
       paymentMethod: paymentMethod || undefined,
-      shippingMethod: payload.shippingMethod || undefined,
+      shippingMethod: shippingMethod || undefined,
     };
 
     const { response, json } = await shopwareFetch("/checkout/order", {
@@ -162,6 +200,15 @@ export async function POST(request: Request) {
       (typeof data?.token === "string" ? data.token : "");
 
     if (!response.ok) {
+      logCheckout("shopware-order-failed", {
+        status: response.status,
+        contextToken: maskToken(nextContextToken || contextToken),
+        errorDetail:
+          (data as Record<string, Array<Record<string, string>>>)?.errors?.[0]?.detail ||
+          (data as Record<string, Array<Record<string, string>>>)?.errors?.[0]?.title ||
+          "Bestellung fehlgeschlagen.",
+        orderId: typeof data?.id === "string" ? data.id : "",
+      });
       return NextResponse.json(
         {
           error:
@@ -174,12 +221,23 @@ export async function POST(request: Request) {
       );
     }
 
+    logCheckout("shopware-order-success", {
+      status: response.status,
+      contextToken: maskToken(nextContextToken || contextToken),
+      orderId: typeof data?.id === "string" ? data.id : "",
+      orderNumber: typeof data?.orderNumber === "string" ? data.orderNumber : "",
+    });
+
     return NextResponse.json({
       ok: true,
       order: data,
       contextToken: nextContextToken || undefined,
     });
-  } catch {
+  } catch (error) {
+    logCheckout("shopware-order-exception", {
+      message: error instanceof Error ? error.message : "unknown error",
+      contextToken: maskToken(contextToken),
+    });
     return NextResponse.json(
       { error: "Shopware Order API ist nicht erreichbar." },
       { status: 502 }
