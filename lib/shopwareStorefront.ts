@@ -9,7 +9,11 @@ export const SHOPWARE_CART_URL = `${storefrontBaseUrl}/checkout/cart`;
 export const SHOPWARE_CONFIRM_URL = `${storefrontBaseUrl}/checkout/confirm`;
 export const SHOPWARE_ACCOUNT_REGISTER_URL = `${storefrontBaseUrl}/account/login#register`;
 
-// Store-API Base URL (ohne /api Pfad)
+export function getMediaUrl(mediaUrl: string | null | undefined): string {
+  if (!mediaUrl) return "";
+  return mediaUrl.replace(/^https?:\/\/[^\/]+(\/media)?/, "/media");
+}
+
 export function getShopwareApiBase(): string {
   const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "https://localhost:8000";
   return raw.replace(/\/api\/?$/, "").replace(/\/+$/, "");

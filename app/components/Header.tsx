@@ -13,7 +13,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
-import { SHOPWARE_CART_URL } from "@/lib/shopwareStorefront";
+
 
 export default function Header() {
   const [open, setOpen] = useState(false);
@@ -41,7 +41,7 @@ export default function Header() {
 
       if (open) {
         setIsVisible(true);
-      } else if (currentY < 32) {
+      } else if (currentY < 120) {
         setIsVisible(true);
       } else if (goingDown && currentY > 120) {
         setIsVisible(false);
@@ -155,7 +155,7 @@ export default function Header() {
             </button>
           )}
           <Link
-            href={SHOPWARE_CART_URL}
+            href="/Checkout"
             className="rounded-full border border-[rgba(100,140,255,0.2)] bg-gradient-to-r from-[rgba(20,40,100,0.6)] to-[rgba(30,55,130,0.6)] px-4 py-2 text-[#c8d8f8] shadow-[0_2px_16px_rgba(0,0,0,0.25)] transition duration-300 hover:-translate-y-0.5 hover:border-[#4f9eff] hover:text-[#7bb8ff]"
           >
             <span className="flex items-center gap-2">
@@ -231,12 +231,12 @@ export default function Header() {
                 <LogoutIcon fontSize="small" /> Abmelden
               </button>
             )}
-            <Link
-              href={SHOPWARE_CART_URL}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] px-3 py-3 text-white"
-            >
-              <ShoppingBasketIcon fontSize="small" /> Zum Warenkorb
-            </Link>
+<Link
+               href="/Checkout"
+               className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] px-3 py-3 text-white"
+             >
+               <ShoppingBasketIcon fontSize="small" /> Zum Warenkorb
+             </Link>
           </nav>
         </div>
       )}

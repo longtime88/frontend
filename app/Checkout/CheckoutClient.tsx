@@ -40,7 +40,7 @@ type CheckoutClientProps = {
 };
 
 export default function Checkout({ initialContextToken }: CheckoutClientProps) {
-  const [step, setStep] = useState<"address" | "shipping" | "payment" | "review" | "success" | "login">("address");
+  const [step, setStep] = useState<"address" | "shipping" | "payment" | "review" | "success">("address");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -63,12 +63,7 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPayment, setSelectedPayment] = useState("");
   const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
-  const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
-  const [authRequired, setAuthRequired] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginSubmitting, setLoginSubmitting] = useState(false);
-  const [guestSubmitting, setGuestSubmitting] = useState(false);
+const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
   const contextTokenRef = useRef(initialContextToken);
 
   useEffect(() => {
@@ -88,18 +83,15 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
       const r = await fetch("/api/customer/me", { cache: "no-store" });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) return;
-      if (data.loggedIn) {
-        setCustomerLoggedIn(true);
-        setShippingAddress((prev) => ({
-          ...prev,
-          firstName: prev.firstName || String(data.firstName || ""),
-          lastName: prev.lastName || String(data.lastName || ""),
-          email: prev.email || String(data.email || data.customerEmail || ""),
-        }));
-        if (typeof data.email === "string") {
-          setLoginEmail((prev) => prev || data.email);
-        }
-      } else {
+if (data.loggedIn) {
+          setCustomerLoggedIn(true);
+          setShippingAddress((prev) => ({
+            ...prev,
+            firstName: prev.firstName || String(data.firstName || ""),
+            lastName: prev.lastName || String(data.lastName || ""),
+            email: prev.email || String(data.email || data.customerEmail || ""),
+          }));
+        } else {
         setCustomerLoggedIn(false);
       }
     } catch {
@@ -122,14 +114,26 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
       const lineItems = data.cart?.lineItems || {};
       const customItems = getCustomCartItems();
       const merged = mergeCartWithCustom(lineItems, customItems);
-      const items = (merged as Array<Record<string, unknown>>).map((li) => ({
-        id: String(li.id ?? ""),
-        label: String(li.label ?? ""),
-        quantity: Number(li.quantity) || 1,
-        priceTotal: Number((li.priceTotal as number) ?? (li.price as Record<string, unknown>)?.totalPrice ?? 0),
-        cover: li.cover as string | { media?: { url?: string; translated?: { alt?: string } } } | undefined,
-        referencedId: String((li as Record<string, unknown>).referencedId ?? ""),
-      }));
+      const items = (merged as Array<Record<string, unknown>>).map((li) => {
+        const shopwarePrice = (li.price as Record<string, unknown>)?.totalPrice;
+        const customPrice = li.priceTotal as number;
+        let priceTotal = 0;
+
+        if (typeof customPrice === 'number' && customPrice > 0) {
+          priceTotal = customPrice;
+        } else if (typeof shopwarePrice === 'number') {
+          priceTotal = Math.round(shopwarePrice * 100);
+        }
+
+        return {
+          id: String(li.id ?? ""),
+          label: String(li.label ?? ""),
+          quantity: Number(li.quantity) || 1,
+          priceTotal,
+          cover: li.cover as string | { media?: { url?: string; translated?: { alt?: string } } } | undefined,
+          referencedId: String((li as Record<string, unknown>).referencedId ?? ""),
+        };
+      });
 
       // Dedup items that share the same id
       const seen = new Set<string>();
@@ -156,7 +160,7 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
         setCountryId(detectedCountryId);
       }
       const deliveryShipping = (deliveries[0]?.shippingCosts as Record<string, unknown> | undefined)?.totalPrice
-        ? Number((deliveries[0]?.shippingCosts as Record<string, unknown>)?.totalPrice)
+        ? Math.round(Number((deliveries[0]?.shippingCosts as Record<string, unknown>)?.totalPrice) * 100)
         : 0;
 const itemsTotal = deduped.reduce((s, it) => s + it.priceTotal, 0);
 
@@ -217,62 +221,20 @@ try {
 
   useEffect(() => {
     applyContextToken(initialContextToken);
-    loadCustomer();
-    loadCart();
-  }, [initialContextToken, loadCart, loadCustomer]);
-
-  const isAuthRequiredError = (status: number, message: string) =>
-    status === 401 ||
-    status === 403 ||
-    /not logged in|nicht eingeloggt|login/i.test(message);
-
-  const loginAndContinue = async () => {
-    if (!loginEmail || !loginPassword) {
-      setError("Bitte E-Mail und Passwort eingeben.");
-      return;
-    }
-
-    setLoginSubmitting(true);
-    setError("");
-    try {
-      const r = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: loginEmail,
-          password: loginPassword,
-          contextToken: contextTokenRef.current,
-        }),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setError(data?.error || "Login fehlgeschlagen.");
-        return;
-      }
-
-      if (typeof data?.contextToken === "string" && data.contextToken) {
-        applyContextToken(data.contextToken);
-      }
-      setCustomerLoggedIn(true);
-      setAuthRequired(false);
-      setShippingAddress((prev) => ({ ...prev, email: prev.email || loginEmail }));
+    async function init() {
+      await loadCustomer();
       await loadCart();
-      setStep("review");
-    } catch {
-      setError("Login nicht erreichbar.");
-    } finally {
-      setLoginSubmitting(false);
     }
-  };
+    init();
+  }, [initialContextToken, loadCart, loadCustomer]);
 
   const continueAsGuest = async () => {
     if (!shippingAddress.email) {
       setError("Bitte gib eine E-Mail in der Lieferadresse an, um als Gast zu bestellen.");
-      setStep("address");
-      return;
+      return false;
     }
 
-    setGuestSubmitting(true);
+    setSubmitting(true);
     setError("");
     try {
       const bill = sameAsShipping ? shippingAddress : billingAddress;
@@ -289,20 +251,20 @@ try {
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
         setError(data?.error || "Gastbestellung konnte nicht vorbereitet werden.");
-        return;
+        return false;
       }
 
       if (typeof data?.contextToken === "string" && data.contextToken) {
         applyContextToken(data.contextToken);
       }
       setCustomerLoggedIn(true);
-      setAuthRequired(false);
       await loadCart();
-      await placeOrder();
+      return true;
     } catch {
       setError("Gastbestellung nicht erreichbar.");
+      return false;
     } finally {
-      setGuestSubmitting(false);
+      setSubmitting(false);
     }
   };
 
@@ -315,6 +277,12 @@ try {
       setError("Bitte waehle zuerst Versand- und Zahlungsart aus.");
       return;
     }
+
+    if (!customerLoggedIn) {
+      const guestSuccess = await continueAsGuest();
+      if (!guestSuccess) return;
+    }
+
     setSubmitting(true);
     setError("");
     try {
@@ -340,14 +308,7 @@ try {
       const data = await r.json();
       if (!r.ok) {
         const msg = data?.error || "Bestellung fehlgeschlagen.";
-        if (isAuthRequiredError(r.status, String(msg))) {
-          setAuthRequired(true);
-          setStep("login");
-          setLoginEmail((prev) => prev || shippingAddress.email || "");
-          setError("Bitte einloggen oder als Gast fortfahren, um die Bestellung abzuschliessen.");
-        } else {
-          setError(msg);
-        }
+        setError(msg);
         setSubmitting(false);
         return;
       }
@@ -355,7 +316,6 @@ try {
       if (data.contextToken) {
         applyContextToken(data.contextToken);
       }
-      setAuthRequired(false);
       setOrderResult({
         id: typeof data?.order?.id === "string" ? data.order.id : undefined,
         orderNumber: typeof data?.order?.orderNumber === "string" ? data.order.orderNumber : undefined,
@@ -405,7 +365,6 @@ try {
       setContextToken("");
       contextTokenRef.current = "";
       setCustomerLoggedIn(false);
-      setAuthRequired(false);
     } catch (err) {
       setError("Warenkorb konnte nicht geleert werden.");
       console.error(err);
@@ -427,7 +386,7 @@ try {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 md:py-14">
-      {/* Fortschritt */}
+      {/* Fortschritt - ohne login step */}
       <div className="mb-8 flex items-center gap-2">
         {["address", "shipping", "payment", "review"].map((s, i) => {
           const labels: Record<string, string> = { address: "Adresse", shipping: "Versand", payment: "Zahlung", review: "Prüfen" };
@@ -492,10 +451,13 @@ try {
                    ))}
                  </div>
                )}
-               <button onClick={() => setStep("shipping")}
-                 className="mt-6 w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-3 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">
-                 Weiter zu Versand
-               </button>
+<button 
+                  onClick={() => setStep("shipping")} 
+                  disabled={!shippingAddress.firstName || !shippingAddress.lastName || !shippingAddress.street || !shippingAddress.zipcode || !shippingAddress.city}
+                  className="mt-6 w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-3 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Weiter zu Versand
+                </button>
             </div>
           )}
 
@@ -525,12 +487,17 @@ try {
                       </label>
                     ))}
                   </div>}
-               <div className="mt-6 flex gap-3">
-                 <button onClick={() => setStep("address")}
-                   className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
-                 <button onClick={() => setStep("payment")}
-                   className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">Weiter zu Zahlung</button>
-               </div>
+<div className="mt-6 flex gap-3">
+                  <button onClick={() => setStep("address")}
+                    className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
+                  <button 
+                    onClick={() => setStep("payment")} 
+                    disabled={!selectedShipping}
+                    className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Weiter zu Zahlung
+                  </button>
+                </div>
             </div>
           )}
 
@@ -560,12 +527,17 @@ try {
                        </label>
                      ))}
                    </div>}
-               <div className="mt-6 flex gap-3">
-                 <button onClick={() => setStep("shipping")}
-                   className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
-                 <button onClick={() => setStep("review")}
-                   className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">Weiter zur Prüfung</button>
-               </div>
+<div className="mt-6 flex gap-3">
+                  <button onClick={() => setStep("shipping")}
+                    className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
+                  <button 
+                    onClick={() => setStep("review")} 
+                    disabled={!selectedPayment}
+                    className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Weiter zur Prüfung
+                  </button>
+                </div>
             </div>
           )}
 
@@ -623,66 +595,6 @@ try {
             </div>
           )}
 
-          {/* Login erforderlich / Gastcheckout */}
-          {step === "login" && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-              <h2 className="mb-2 text-lg font-bold text-amber-900">Anmeldung erforderlich</h2>
-              <p className="text-sm text-amber-800">
-                {authRequired
-                  ? "Dein Shopware-Channel verlangt Anmeldung vor dem Bestellen."
-                  : "Bitte melde dich an oder nutze Gastbestellung."}
-              </p>
-
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-amber-200 bg-white p-4">
-                  <p className="mb-3 text-sm font-semibold">Mit bestehendem Konto einloggen</p>
-               <div className="space-y-4">
-                     {shippingMethods.map(m => (
-                       <label key={m.id}
-                         className={`flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-5 transition-all duration-200 ${selectedShipping === m.id ? "border-[color:var(--brand)] bg-[color:var(--brand)]/5 shadow-glow" : "border-[color:var(--line)] hover:border-[color:var(--brand)]/40 hover:bg-white/5"}`}>
-                         <input type="radio" name="shipping" value={m.id} checked={selectedShipping === m.id}
-                           onChange={() => setSelectedShipping(m.id)} className="sr-only" />
-                         {m.media?.url && (
-                           // eslint-disable-next-line @next/next/no-img-element
-                           <img src={m.media.url} alt="" className="h-10 w-10 rounded-xl object-contain" />
-                         )}
-                         <div className="flex-1">
-                           <p className="font-semibold text-base">{m.name}</p>
-                           {m.description && <p className="text-sm text-[color:var(--muted)]">{m.description}</p>}
-                         </div>
-                         <div className={`h-5 w-5 rounded-full border-2 ${selectedShipping === m.id ? "border-[color:var(--brand)] bg-[color:var(--brand)]" : "border-gray-300 hover:border-[color:var(--brand)]/40"}`}>
-                           {selectedShipping === m.id && <div className="m-auto h-3 w-3 rounded-full bg-white" />}
-                         </div>
-                       </label>
-                     ))}
-                   </div>
-                </div>
-
-                <div className="rounded-xl border border-amber-200 bg-white p-4">
-                  <p className="mb-3 text-sm font-semibold">Als Gast bestellen</p>
-                  <p className="mb-3 text-xs text-[color:var(--muted)]">
-                    Nutzt die Lieferadresse und E-Mail aus Schritt 1.
-                  </p>
-                  <button
-                    onClick={continueAsGuest}
-                    disabled={guestSubmitting}
-                    className="w-full rounded-full border border-[color:var(--line)] bg-white py-2.5 text-sm font-bold text-[color:var(--ink)] hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {guestSubmitting ? "Bereite Gastkonto vor..." : "Als Gast fortfahren"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-5 flex gap-3">
-                <button
-                  onClick={() => setStep("review")}
-                  className="flex-1 rounded-full border border-[color:var(--line)] py-2.5 font-bold text-sm hover:bg-white"
-                >
-                  Zurück zur Prüfung
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* 5. Erfolg */}
           {step === "success" && (
