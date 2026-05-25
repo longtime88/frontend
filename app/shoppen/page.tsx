@@ -17,7 +17,7 @@ async function getProducts(category?: string): Promise<ProductItem[]> {
   const headers = { "sw-access-key": process.env.SHOPWARE_STORE_API_ACCESS_KEY || "" };
 
   try {
-    let res = await fetch(url, { headers, next: { revalidate: 60 } });
+    const res = await fetch(url, { headers, next: { revalidate: 60 } });
     if (!res.ok) return [];
 
     const data = await res.json().catch(() => ({ elements: [] }));
@@ -64,8 +64,17 @@ const categories = [
 
 export const dynamic = "force-dynamic";
 
-export default async function ShoppenPage() {
-  const products = await getProducts();
+type ShoppenPageProps = {
+  searchParams?: {
+    category?: string | string[];
+  };
+};
+
+export default async function ShoppenPage({ searchParams }: ShoppenPageProps) {
+  const selectedCategory = Array.isArray(searchParams?.category)
+    ? searchParams?.category[0]
+    : searchParams?.category;
+  const products = await getProducts(selectedCategory);
 
   return (
     <section className="min-h-screen bg-[color:var(--bg)]">

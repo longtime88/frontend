@@ -128,7 +128,7 @@ function SearchContent() {
               onClick={() => handleAddToCart(product)}
               disabled={addingProductId === product.id}
             >
-              {addingProductId === product.id ? "Wird hinzugefuegt..." : "Zum Checkout"}
+              {addingProductId === product.id ? "Wird hinzugefuegt..." : "In den Warenkorb"}
             </button>
           </article>
         ))}

@@ -54,12 +54,6 @@ export default function Homepage() {
               </span>
               <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform group-hover:translate-x-0" />
             </Link>
-            <Link
-              href="/Checkout"
-              className="rounded-full border border-[color:var(--line)] bg-[color:var(--surface)] px-8 py-4 text-sm font-semibold text-[color:var(--ink)] transition-all duration-300 hover:-translate-y-1 hover:bg-[color:var(--surface-subtle)]"
-            >
-              Zum Checkout
-            </Link>
           </div>
 
           {/* Stats */}
@@ -78,42 +72,8 @@ export default function Homepage() {
         </div>
       </section>
 
-      {/* Categories Teaser with Scroll Animations */}
-      <section className="border-t border-[color:var(--line)] bg-[color:var(--surface)] py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="text-center animate-on-scroll">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Kategorien</p>
-            <h2 className="mt-2 text-3xl font-bold text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
-              Entdecken Sie unsere Lösungen
-            </h2>
-          </div>
-
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {[
-              { icon: "🧩", title: "Shopware Plugins", desc: "Maßgeschneiderte Erweiterungen für Ihren Shop" },
-              { icon: "🎨", title: "Frontend Templates", desc: "Moderne UI-Komponenten für React & Next.js" },
-              { icon: "⚙️", title: "Automation", desc: "Workflows zur Zeitersparnis" },
-            ].map((item, idx) => (
-              <div
-                key={item.title}
-                className="group animate-on-scroll rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface-card)] p-8 text-center transition-all duration-300 hover:-translate-y-2"
-                style={{ animationDelay: `${idx * 100}ms` }}
-              >
-                <div className="mb-4 text-4xl transition-transform duration-300 group-hover:scale-110">{item.icon}</div>
-                <h3 className="text-xl font-bold text-[color:var(--ink)] [font-family:var(--font-fraunces)]">{item.title}</h3>
-                <p className="mt-2 text-[color:var(--muted)]">{item.desc}</p>
-                <Link
-                  href="/shoppen"
-                  className="mt-4 inline-block text-sm font-semibold text-[color:var(--brand)] group-hover:underline"
-                >
-                  Mehr erfahren →
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      {/* Categories Teaser section removed as requested */}
+      
       <Analytics />
       <SpeedInsights />
       <ScrollAnimations />

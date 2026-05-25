@@ -1,5 +1,5 @@
 const rawStorefrontBaseUrl =
-  process.env.NEXT_PUBLIC_SHOPWARE_STOREFRONT_URL ?? "https://localhost:8000";
+  process.env.NEXT_PUBLIC_SHOPWARE_STOREFRONT_URL ?? "http://localhost:8080";
 
 const storefrontBaseUrl = rawStorefrontBaseUrl.replace(/\/+$/, "");
 
@@ -15,7 +15,7 @@ export function getMediaUrl(mediaUrl: string | null | undefined): string {
 }
 
 export function getShopwareApiBase(): string {
-  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "https://localhost:8000";
+  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8080";
   return raw.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 }
 

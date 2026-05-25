@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 function getShopwareUrl() {
-  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8080";
   return raw.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 }
 

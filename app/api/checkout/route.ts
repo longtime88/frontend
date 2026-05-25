@@ -15,7 +15,7 @@ function logCheckout(event: string, details: Record<string, unknown>): void {
 }
 
 function getBaseUrl() {
-  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  const raw = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8080";
   return raw.replace(/\/api\/?$/, "").replace(/\/+$/, "");
 }
 

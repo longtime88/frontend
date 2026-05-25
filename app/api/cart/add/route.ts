@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const baseUrl = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  const baseUrl = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8080";
   const cleanUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
   const url = `${cleanUrl}/store-api/checkout/cart/line-item`;
 

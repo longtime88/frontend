@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { FormEvent } from "react";
 import { SHOPWARE_ACCOUNT_REGISTER_URL } from "@/lib/shopwareStorefront";
 
 export default function Anmelden() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -29,6 +31,10 @@ export default function Anmelden() {
       const data = await res.json().catch(() => ({}));
       setSuccess(res.ok);
       setMessage(res.ok ? "Anmeldung erfolgreich!" : (data?.error || "Login fehlgeschlagen"));
+      if (res.ok) {
+        router.push("/");
+        router.refresh();
+      }
     } catch {
       setMessage("Server nicht erreichbar");
     } finally {

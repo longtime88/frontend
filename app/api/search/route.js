@@ -14,7 +14,7 @@ export async function GET(request) {
     );
   }
 
-  const baseUrl = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8000";
+  const baseUrl = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8080";
   const cleanUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
   const searchUrl = `${cleanUrl}/store-api/search`;
 

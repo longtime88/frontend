@@ -1,33 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import HomeIcon from "@mui/icons-material/Home";
 import InfoIcon from "@mui/icons-material/Info";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
-import LoginIcon from "@mui/icons-material/Login";
-import LogoutIcon from "@mui/icons-material/Logout";
 import SearchIcon from "@mui/icons-material/Search";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 
-
 export default function Header() {
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isKontaktPage = pathname === "/kontakt";
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
-  // Read initial login state from localStorage without a useEffect.
-  // `"use client"` ensures this code only runs on the client.
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !!localStorage.getItem("sw-customer-token");
-    }
-    return false;
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const lastScrollY = useRef(0);
   const router = useRouter();
@@ -39,7 +32,7 @@ export default function Header() {
 
       setIsScrolled(currentY > 12);
 
-      if (open) {
+      if (mobileOpen) {
         setIsVisible(true);
       } else if (currentY < 120) {
         setIsVisible(true);
@@ -54,14 +47,49 @@ export default function Header() {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [open]);
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function syncCustomerState() {
+      try {
+        const response = await fetch("/api/customer/me", { cache: "no-store" });
+        const data = await response.json().catch(() => ({}));
+
+        if (!active) return;
+        if (!response.ok || !data?.loggedIn) {
+          setIsLoggedIn(false);
+          setCustomerName(null);
+          return;
+        }
+
+        const fullName = [data?.firstName, data?.lastName]
+          .map((value: unknown) => String(value || "").trim())
+          .filter(Boolean)
+          .join(" ");
+
+        setIsLoggedIn(true);
+        setCustomerName(fullName || String(data?.email || data?.customerEmail || "Konto"));
+      } catch {
+        if (!active) return;
+        setIsLoggedIn(false);
+        setCustomerName(null);
+      }
+    }
+
+    void syncCustomerState();
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
 
   function handleSearch(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!query.trim()) return;
 
     router.push(`/search?q=${encodeURIComponent(query)}`);
-    setOpen(false);
+    setMobileOpen(false);
   }
 
   async function handleLogout() {
@@ -78,168 +106,436 @@ export default function Header() {
   }
 
   return (
-    <header
-      className={`sticky top-0 z-50 border-b transition-all duration-700 ease-out ${
-        isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-90"
-      } ${
-        isScrolled
-          ? "border-[rgba(100,140,255,0.22)] glass shadow-[0_4px_40px_rgba(0,0,0,0.35)]"
-          : "border-[rgba(100,140,255,0.12)] glass shadow-[0_2px_20px_rgba(0,0,0,0.2)]"
-      }`}
-    >
-      {/* Top-Bar */}
-      <div className="hidden h-8 items-center justify-center border-b border-[rgba(100,140,255,0.1)] bg-gradient-to-r from-[rgba(30,60,160,0.55)] via-[rgba(55,100,210,0.35)] to-[rgba(30,80,180,0.55)] text-[9px] font-bold tracking-[0.14em] text-[#8ab4f8] md:flex">
-        WEBENTWICKLUNG · PORTFOLIO · DIGITALER SHOP
-      </div>
-
-      <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 md:px-6">
-        {/* Logo */}
-        <Link href="/" className="group shrink-0">
-          <p className="bg-gradient-to-r from-[#7bb8ff] via-[#4f9eff] to-[#38c8e0] bg-clip-text text-xl font-bold tracking-[0.02em] text-transparent transition brightness-110 group-hover:brightness-130 [font-family:var(--font-fraunces)]">
-            Molinka
-          </p>
-          <p className="text-[9px] font-semibold tracking-[0.14em] text-[#5a7090]">
-            WEB DEVELOPER STUDIO
-          </p>
-        </Link>
-
-        {/* Suche */}
-        <form onSubmit={handleSearch} className="hidden flex-1 md:flex">
-          <div className="flex w-full items-center rounded-full border border-[rgba(100,140,255,0.15)] glass-input px-2 py-2 ring-1 ring-[rgba(79,158,255,0.08)]">
-            <input
-              type="text"
-              placeholder="Suche nach Produkten..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-transparent px-4 text-sm text-[#dde4f0] outline-none placeholder:text-[#5a6f8e]"
-            />
-            <button
-              type="submit"
-              className="rounded-full bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] p-2 text-[#e8ecf4] transition hover:from-[#1e5ab0] hover:to-[#2d6fd8]"
-              aria-label="Suche starten"
-            >
-              <SearchIcon fontSize="small" />
-            </button>
-          </div>
-        </form>
-
-        {/* Navigation */}
-        <nav className="hidden items-center gap-1.5 text-xs font-semibold text-[#8892b0] md:flex">
-          <Link href="/" className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(30,60,160,0.18)] hover:text-[#7bb8ff]">
-            <HomeIcon fontSize="small" /> Start
-          </Link>
-          <Link href="/ueber-uns" className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(20,80,50,0.18)] hover:text-[#38c8e0]">
-            <InfoIcon fontSize="small" /> Über uns
-          </Link>
-          <Link href="/kontakt" className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(30,80,160,0.18)] hover:text-[#4f9eff]">
-            <ContactMailIcon fontSize="small" /> Kontakt
-          </Link>
-          {isLoggedIn && customerName ? (
-            <div className="flex items-center gap-2 rounded-full border border-[rgba(100,140,255,0.2)] bg-gradient-to-r from-[rgba(20,40,100,0.6)] to-[rgba(30,55,130,0.6)] px-3 py-1.5 text-[#c8d8f8] shadow-[0_2px_16px_rgba(0,0,0,0.25)]">
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7bb8ff]">Kunde</span>
-              <span className="h-3.5 w-px bg-[rgba(100,140,255,0.25)]" />
-              <span className="text-xs font-semibold text-[#dde4f0]">{customerName}</span>
-            </div>
-          ) : (
-            <Link href="/anmelden" className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(120,50,160,0.18)] hover:text-[#b48aff]">
-              <LoginIcon fontSize="small" /> Konto
-            </Link>
-          )}
-          {isLoggedIn && (
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 rounded-full px-3 py-2 transition duration-300 hover:-translate-y-0.5 hover:bg-[rgba(200,50,50,0.18)] hover:text-red-400"
-              title="Abmelden"
-            >
-              <LogoutIcon fontSize="small" />
-            </button>
-          )}
-          <Link
-            href="/Checkout"
-            className="rounded-full border border-[rgba(100,140,255,0.2)] bg-gradient-to-r from-[rgba(20,40,100,0.6)] to-[rgba(30,55,130,0.6)] px-4 py-2 text-[#c8d8f8] shadow-[0_2px_16px_rgba(0,0,0,0.25)] transition duration-300 hover:-translate-y-0.5 hover:border-[#4f9eff] hover:text-[#7bb8ff]"
+    <>
+      <header
+        className={`sticky top-0 z-50 border-b transition-all duration-200 ease-out ${
+          isVisible ? "translate-y-0 opacity-100" : "-translate-y-full"
+        } ${
+          isScrolled
+            ? "border-[rgba(255,255,255,0.1)]"
+            : "border-[rgba(255,255,255,0.08)]"
+        } dark:border-[rgba(17,24,39,0.5)] dark:border-[rgba(17,24,39,0.3)] bg-gray-900`}
+      >
+        {/* Main Header Container */}
+        <div className="mx-auto flex h-[60px] max-w-[1280px] items-center px-4 md:px-6">
+          {/* Mobile: Hamburger Menu */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden flex-shrink-0 mr-2 p-1 text-gray-300 hover:text-white"
+            aria-label="Menü"
           >
-            <span className="flex items-center gap-2">
-              <ShoppingBasketIcon fontSize="small" /> Warenkorb
-            </span>
+            {mobileOpen ? (
+              <CloseIcon fontSize="small" className="text-[24px]" />
+            ) : (
+              <MenuIcon fontSize="small" className="text-[24px]" />
+            )}
+          </button>
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0 mr-6">
+            <img
+              src="/logo-amazon.svg"
+              alt="Molinka"
+              className="h-[20px] w-auto"
+            />
+            <span className="text-white font-semibold tracking-wide">Molinka</span>
           </Link>
-        </nav>
 
-        {/* Mobile Menu Button */}
-        <button
-          type="button"
-          aria-label={open ? "Menü schließen" : "Menü öffnen"}
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          className="ml-auto rounded-full border border-[rgba(100,140,255,0.15)] bg-gradient-to-r from-[rgba(20,40,100,0.55)] to-[rgba(30,55,130,0.55)] p-2 text-[#b0c4e8] md:hidden"
-          onClick={() => setOpen(!open)}
-        >
-          {open ? <CloseIcon /> : <MenuIcon />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {open && (
-        <div
-          id="mobile-menu"
-          className="glass-input border-t border-[rgba(100,140,255,0.12)] px-4 pb-6 pt-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:hidden"
-        >
-          <form onSubmit={handleSearch} className="mb-4">
-            <div className="flex items-center rounded-full border border-[rgba(100,140,255,0.15)] px-2 py-2 shadow-sm">
+          {/* Desktop Search Bar - Hidden on Mobile */}
+          <form
+            onSubmit={handleSearch}
+            className="hidden md:flex flex-1 max-w-[500px] mr-4"
+          >
+            <div className="relative w-full">
               <input
                 type="text"
                 placeholder="Suche nach Produkten..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full bg-transparent px-4 text-sm text-[#dde4f0] outline-none placeholder:text-[#5a6f8e]"
+                className="
+                  w-full 
+                  h-[40px] 
+                  pl-[45px] 
+                  pr-10 
+                  text-sm 
+                  text-gray-300 
+                  bg-gray-800 
+                  border 
+                  border-gray-600 
+                  rounded-l-md 
+                  focus:outline-none 
+                  focus:ring-2 
+                  focus:ring-[#fea41b]
+                  focus:border-[#fea41b]
+                  placeholder:text-gray-500
+                  dark:bg-gray-700
+                  dark:border-gray-600
+                  dark:text-gray-200
+                  dark:placeholder:text-gray-400
+                "
               />
               <button
                 type="submit"
-                className="rounded-full bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] p-2 text-[#e8ecf4]"
+                className="
+                  absolute 
+                  right-0 
+                  top-0 
+                  bottom-0 
+                  w-[50px] 
+                  bg-[#fea41b] 
+                  text-black 
+                  font-medium 
+                  flex 
+                  items-center 
+                  justify-center 
+                  border-none 
+                  rounded-r-md 
+                  hover:bg-[#febd69] 
+                  transition-colors
+                  px-2
+                  dark:text-white
+                "
                 aria-label="Suche starten"
               >
-                <SearchIcon fontSize="small" />
+                <SearchIcon fontSize="small" className="text-[14px]" />
               </button>
             </div>
           </form>
 
-          <nav className="flex flex-col gap-3 text-sm font-semibold text-[#8892b0]">
-            <Link href="/" className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[rgba(30,60,160,0.18)]">
-              <HomeIcon fontSize="small" /> Start
-            </Link>
-            <Link href="/ueber-uns" className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[rgba(30,60,160,0.18)]">
-              <InfoIcon fontSize="small" /> Über uns
-            </Link>
-            <Link href="/kontakt" className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[rgba(30,60,160,0.18)]">
-              <ContactMailIcon fontSize="small" /> Kontakt
-            </Link>
+          {/* Mobile: Search Icon */}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="md:hidden flex items-center justify-center ml-auto mr-2 p-1 text-gray-300 hover:text-white"
+            aria-label="Suche"
+          >
+            <SearchIcon fontSize="small" className="text-[20px]" />
+          </button>
+
+          {/* Account & Cart - Desktop */}
+          <div className="hidden md:flex items-center gap-4 ml-auto">
+            {/* Account Section */}
             {isLoggedIn && customerName ? (
-              <div className="mt-1 flex items-center gap-2 rounded-xl border border-[rgba(100,140,255,0.15)] bg-[rgba(20,40,100,0.3)] px-3 py-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7bb8ff]">Kunde</span>
-                <span className="h-3.5 w-px bg-[rgba(100,140,255,0.2)]" />
-                <span className="text-sm font-semibold text-[#dde4f0]">{customerName}</span>
+              <div className="relative z-20">
+                <div
+                  onClick={() => setAccountOpen(!accountOpen)}
+                  className="
+                    flex 
+                    items-center 
+                    gap-2 
+                    text-sm 
+                    text-gray-300 
+                    hover:text-white 
+                    cursor-pointer
+                    px-2 
+                    py-1
+                    rounded
+                    hover:bg-gray-700
+                    dark:hover:bg-gray-600
+                  "
+                >
+                  <span>Hallo, {customerName.split(" ")[0]}</span>
+                  <span className="text-xs">Konto &amp; Listen</span>
+                  <span className="ml-1 text-[10px]">▾</span>
+                </div>
+                {/* Dropdown Menu */}
+                {accountOpen && (
+                  <div className="
+                    absolute 
+                    left-0 
+                    mt-2.5 
+                    w-[200px] 
+                    bg-gray-800 
+                    border 
+                    border-gray-600 
+                    rounded-md 
+                    shadow-lg 
+                    z-30
+                    dark:bg-gray-900
+                    dark:border-gray-700
+                    animate-fade-in
+                  ">
+                    <div className="px-4 py-3">
+                      <p className="text-sm font-medium text-gray-200 dark:text-gray-100">
+                        Hallo, {customerName}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+                        <Link
+                          href="/konto"
+                          className="text-blue-400 hover:underline dark:hover:text-blue-300"
+                        >
+                          Konto anzeigen
+                        </Link>
+                      </p>
+                    </div>
+                    <div className="border-t border-gray-600 my-2 dark:border-gray-600"></div>
+                    <nav className="space-y-1">
+                      <Link
+                        href="/konto"
+                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-600"
+                      >
+                        Dein Konto
+                      </Link>
+                      <Link
+                        href="/ueber-uns"
+                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-600"
+                      >
+                        Über uns
+                      </Link>
+                      <Link
+                        href="/kontakt"
+                        className={`block px-4 py-2 text-sm hover:bg-gray-700 dark:hover:bg-gray-600 ${
+                          isKontaktPage
+                            ? "text-[#fea41b] bg-gray-700/60"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        Kontakt
+                      </Link>
+                      <div className="border-t border-gray-600 my-2 dark:border-gray-600"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-600 bg-transparent border-none cursor-pointer font-inherit"
+                      >
+                        Abmelden
+                      </button>
+                    </nav>
+                  </div>
+                )}
               </div>
             ) : (
-              <Link href="/anmelden" className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[rgba(30,60,160,0.18)]">
-                <LoginIcon fontSize="small" /> Konto
+              <Link
+                href="/anmelden"
+                className="flex items-center gap-2 text-sm text-gray-300 hover:text-white dark:hover:text-gray-100"
+              >
+                <span>Hallo, anmelden</span>
+                <span className="text-xs">Konto &amp; Listen</span>
+                <span className="ml-1 text-[10px]">▾</span>
               </Link>
             )}
-            {isLoggedIn && (
+
+            {/* Warenkorb */}
+            <Link
+              href="/Checkout"
+              className="relative flex items-center gap-2 text-sm text-gray-300 hover:text-white dark:hover:text-gray-100"
+            >
+              <ShoppingBasketIcon fontSize="small" className="text-[20px]" />
+              <span>Warenkorb</span>
+              <span className="
+                absolute 
+                -top-[8px] 
+                -right-[8px] 
+                bg-[#fea41b] 
+                text-white 
+                text-[xs] 
+                font-bold 
+                flex 
+                items-center 
+                justify-center 
+                w-[20px] 
+                h-[20px] 
+                rounded-full
+              ">
+                0
+              </span>
+            </Link>
+          </div>
+
+          {/* Mobile: Cart Icon */}
+          <div className="md:hidden ml-auto">
+            <Link
+              href="/Checkout"
+              className="relative flex items-center justify-center p-1 text-gray-300 hover:text-white"
+            >
+              <ShoppingBasketIcon fontSize="small" className="text-[20px]" />
+              <span className="
+                absolute 
+                -top-[6px] 
+                -right-[6px] 
+                bg-[#fea41b] 
+                text-white 
+                text-[10px] 
+                font-bold 
+                flex 
+                items-center 
+                justify-center 
+                w-[18px] 
+                h-[18px] 
+                rounded-full
+              ">
+                0
+              </span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Mobile Search Bar - Shown when menu is open */}
+        {mobileOpen && (
+          <form
+            onSubmit={handleSearch}
+            className="md:hidden border-t border-gray-600 px-4 py-3"
+          >
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Suche..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="
+                  w-full 
+                  h-[40px] 
+                  pl-[45px] 
+                  pr-10 
+                  text-sm 
+                  text-gray-300 
+                  bg-gray-800 
+                  border 
+                  border-gray-600 
+                  rounded-l-md 
+                  focus:outline-none 
+                  focus:ring-2 
+                  focus:ring-[#fea41b]
+                  placeholder:text-gray-500
+                "
+              />
               <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 rounded-xl px-2 py-2 text-left transition hover:bg-[rgba(200,50,50,0.18)] hover:text-red-400"
+                type="submit"
+                className="
+                  absolute 
+                  right-0 
+                  top-0 
+                  bottom-0 
+                  w-[50px] 
+                  bg-[#fea41b] 
+                  text-black 
+                  font-medium 
+                  flex 
+                  items-center 
+                  justify-center 
+                  border-none 
+                  rounded-r-md 
+                  hover:bg-[#febd69]
+                "
+                aria-label="Suche starten"
               >
-                <LogoutIcon fontSize="small" /> Abmelden
+                <SearchIcon fontSize="small" className="text-[14px]" />
               </button>
+            </div>
+          </form>
+        )}
+      </header>
+
+      {/* Mobile Navigation Menu */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 top-[60px] z-40 bg-black bg-opacity-50" onClick={() => setMobileOpen(false)}>
+          <nav className="absolute left-0 top-0 bottom-0 w-[280px] bg-gray-800 border-r border-gray-600 overflow-y-auto">
+            {/* User Section */}
+            {isLoggedIn && customerName ? (
+              <div className="border-b border-gray-600">
+                <div className="px-4 py-4">
+                  <p className="text-sm font-medium text-gray-100">
+                    {customerName}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">Angemeldet</p>
+                </div>
+                <div className="space-y-1 pb-4 px-2">
+                  <Link
+                    href="/konto"
+                    className="block px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Mein Konto
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700 bg-transparent border-none cursor-pointer"
+                  >
+                    Abmelden
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="border-b border-gray-600">
+                <Link
+                  href="/anmelden"
+                  className="block px-4 py-3 text-sm font-medium text-[#fea41b] hover:bg-gray-700"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Anmelden / Registrieren
+                </Link>
+              </div>
             )}
-<Link
-               href="/Checkout"
-               className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2d6fd8] to-[#4f9eff] px-3 py-3 text-white"
-             >
-               <ShoppingBasketIcon fontSize="small" /> Zum Warenkorb
-             </Link>
+
+            {/* Navigation Links */}
+            <div className="space-y-1 p-2">
+              <Link
+                href="/"
+                className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700"
+                onClick={() => setMobileOpen(false)}
+              >
+                <HomeIcon fontSize="small" className="text-[18px]" />
+                <span>Home</span>
+              </Link>
+              <Link
+                href="/shoppen"
+                className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700"
+                onClick={() => setMobileOpen(false)}
+              >
+                <ShoppingBasketIcon fontSize="small" className="text-[18px]" />
+                <span>Shoppen</span>
+              </Link>
+              <Link
+                href="/ueber-uns"
+                className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700"
+                onClick={() => setMobileOpen(false)}
+              >
+                <InfoIcon fontSize="small" className="text-[18px]" />
+                <span>Über uns</span>
+              </Link>
+              <Link
+                href="/kontakt"
+                className={`flex items-center gap-3 px-3 py-2 rounded text-sm hover:bg-gray-700 ${
+                  isKontaktPage
+                    ? "text-[#fea41b] bg-gray-700/60"
+                    : "text-gray-300"
+                }`}
+                onClick={() => setMobileOpen(false)}
+              >
+                <ContactMailIcon fontSize="small" className="text-[18px]" />
+                <span>Kontakt</span>
+              </Link>
+              <Link
+                href="/impressum"
+                className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700"
+                onClick={() => setMobileOpen(false)}
+              >
+                <span>Impressum</span>
+              </Link>
+              <Link
+                href="/datenschutz"
+                className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-300 hover:bg-gray-700"
+                onClick={() => setMobileOpen(false)}
+              >
+                <span>Datenschutz</span>
+              </Link>
+            </div>
           </nav>
         </div>
       )}
-    </header>
+    </>
   );
+}
+
+// Add animation keyframes
+if (typeof window !== "undefined") {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  `;
+  document.head.appendChild(style);
 }
