@@ -56,10 +56,10 @@ async function getProducts(category?: string): Promise<ProductItem[]> {
 }
 
 const categories = [
-  { id: "shopware", name: "Shopware Plugins", icon: "🧩", count: "24" },
-  { id: "templates", name: "Frontend Templates", icon: "🎨", count: "18" },
-  { id: "automation", name: "Automation", icon: "⚙️", count: "12" },
-  { id: "mentoring", name: "Mentoring", icon: "👨‍🏫", count: "8" },
+  { id: "shopware", name: "Shopware Plugins", count: "24" },
+  { id: "templates", name: "Frontend Templates", count: "18" },
+  { id: "automation", name: "Automation", count: "12" },
+  { id: "mentoring", name: "Mentoring", count: "8" },
 ];
 
 export const dynamic = "force-dynamic";
@@ -77,79 +77,75 @@ export default async function ShoppenPage({ searchParams }: ShoppenPageProps) {
   const products = await getProducts(selectedCategory);
 
   return (
-    <section className="min-h-screen bg-[color:var(--bg)]">
-      {/* Amazon-style Header */}
-      <div className="border-b border-[color:var(--line)] bg-[color:var(--surface)]">
+    <div className="min-h-screen bg-white">
+      <div className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4">
-          <h1 className="text-2xl font-bold text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
-            Digitale Produkte entdecken
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900">Digitale Produkte</h1>
+            <nav className="text-sm text-gray-600">
+              <a href="/" className="hover:text-orange-600">Startseite</a> &rsaquo; Shoppen
+            </nav>
+          </div>
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="flex gap-6">
-          {/* Sidebar - Kategorien links */}
-          <aside className="w-64 shrink-0">
-            <div className="sticky top-4 rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-4">
-              <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">
-                Kategorien
-              </h2>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <aside className="lg:w-64">
+            <div className="border border-gray-200 rounded-md p-4">
+              <h2 className="text-sm font-bold text-gray-900 mb-3">Kategorien</h2>
               <nav className="space-y-1">
                 {categories.map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/shoppen?category=${cat.id}`}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[color:var(--ink)] hover:bg-[color:var(--surface-subtle)] transition-colors"
+                    className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded"
                   >
-                    <span className="text-lg">{cat.icon}</span>
-                    <span className="flex-1 text-sm">{cat.name}</span>
-                    <span className="text-xs text-[color:var(--muted)]">{cat.count}</span>
+                    <span>{cat.name}</span>
+                    <span className="text-xs text-gray-500">{cat.count}</span>
                   </Link>
                 ))}
               </nav>
             </div>
           </aside>
 
-          {/* Main Content */}
           <div className="flex-1">
             {products.length === 0 ? (
-              <div className="rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-12 text-center">
-                <p className="text-[color:var(--muted)]">Keine Produkte in dieser Kategorie.</p>
+              <div className="border border-gray-200 rounded-md p-12 text-center">
+                <p className="text-gray-500">Keine Produkte in dieser Kategorie.</p>
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {products.map((p) => (
                   <div
                     key={p.id}
-                    className="group glass-card flex flex-col overflow-hidden rounded-xl border border-[color:var(--line)] bg-[color:var(--surface)] transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)]"
+                    className="border border-gray-200 rounded-md overflow-hidden hover:shadow-md transition-shadow"
                   >
-                    <div className="relative aspect-[4/3] w-full bg-gradient-to-br from-[rgba(79,158,255,0.1)] to-[rgba(56,200,224,0.1)]">
+                    <div className="aspect-[4/3] bg-gray-100 relative">
                       {p.image ? (
                         <img
                           src={p.image}
                           alt={p.name}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-4xl opacity-20">📦</div>
+                        <div className="flex h-full items-center justify-center text-4xl text-gray-300">
+                          📦
+                        </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[rgba(10,20,60,0.5)] to-transparent" />
                     </div>
-                    <div className="flex flex-1 flex-col gap-3 p-4">
-                      <h3 className="text-[color:var(--ink)] font-semibold line-clamp-2 [font-family:var(--font-fraunces)]">
-                        {p.name}
-                      </h3>
-                      <p className="text-sm text-[color:var(--muted)] line-clamp-2 flex-1">
+                    <div className="p-4">
+                      <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">{p.name}</h3>
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                         {p.description || "Direkt einsetzbares Digital-Produkt"}
                       </p>
-                      <div className="mt-auto pt-3 space-y-3">
-                        <p className="text-xl font-extrabold text-[color:var(--brand-light)]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-gray-900">
                           {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "Preis auf Anfrage"}
-                        </p>
+                        </span>
                         <Link
                           href={`/Checkout?product=${encodeURIComponent(p.id)}`}
-                          className="block w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-2 text-center text-sm font-semibold text-[color:var(--ink)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)]"
+                          className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-1.5 px-4 rounded transition-colors"
                         >
                           In den Warenkorb
                         </Link>
@@ -165,6 +161,6 @@ export default async function ShoppenPage({ searchParams }: ShoppenPageProps) {
 
       <Analytics />
       <SpeedInsights />
-    </section>
+    </div>
   );
 }

@@ -56,54 +56,57 @@ export default function KontoPage() {
 
   if (loading) {
     return (
-      <section className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-14">
-        <div className="rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-8 text-sm text-[color:var(--muted)]">
-          Kundendaten werden geladen...
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto max-w-3xl px-4 py-12">
+          <p className="text-gray-600">Kundendaten werden geladen...</p>
         </div>
-      </section>
+      </div>
     );
   }
 
   if (!loggedIn) {
     return (
-      <section className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-14">
-        <div className="rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Konto</p>
-          <h1 className="mt-2 text-3xl font-bold text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-4xl">
-            Bitte anmelden
-          </h1>
-          <p className="mt-3 text-sm text-[color:var(--muted)]">
-            Du bist aktuell nicht eingeloggt. Melde dich an, um dein Konto zu sehen.
-          </p>
-          <Link
-            href="/anmelden"
-            className="mt-6 inline-flex rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[color:var(--accent)] px-6 py-3 text-sm font-semibold text-white"
-          >
-            Zur Anmeldung
-          </Link>
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto max-w-3xl px-4 py-12">
+          <div className="border border-gray-200 rounded-md p-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Konto</h1>
+            <p className="text-gray-600 mb-6">
+              Du bist aktuell nicht eingeloggt. Melde dich an, um dein Konto zu sehen.
+            </p>
+            <Link
+              href="/anmelden"
+              className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-6 rounded transition-colors"
+            >
+              Anmelden
+            </Link>
+          </div>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-14">
-      <div className="rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-8 shadow-glow">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Konto</p>
-        <h1 className="mt-2 text-3xl font-bold text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-4xl">
-          Willkommen in deinem Konto
-        </h1>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-[color:var(--line)] bg-white/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">Name</p>
-            <p className="mt-2 text-base font-semibold text-[color:var(--ink)]">{name || "Nicht angegeben"}</p>
-          </div>
-          <div className="rounded-2xl border border-[color:var(--line)] bg-white/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">E-Mail</p>
-            <p className="mt-2 text-base font-semibold text-[color:var(--ink)]">{email || "Nicht angegeben"}</p>
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <nav className="text-sm text-gray-600 mb-6">
+          <a href="/" className="hover:text-orange-600">Startseite</a> &rsaquo; <span>Konto</span>
+        </nav>
+
+        <div className="border border-gray-200 rounded-md p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Mein Konto</h1>
+          
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="border border-gray-200 rounded-md p-4">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Name</p>
+              <p className="text-gray-900 font-medium">{name || "Nicht angegeben"}</p>
+            </div>
+            <div className="border border-gray-200 rounded-md p-4">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">E-Mail</p>
+              <p className="text-gray-900 font-medium">{email || "Nicht angegeben"}</p>
+            </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

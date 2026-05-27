@@ -63,7 +63,12 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPayment, setSelectedPayment] = useState("");
   const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
-const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
+  const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
+  const [authRequired, setAuthRequired] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
+  const [guestSubmitting, setGuestSubmitting] = useState(false);
   const contextTokenRef = useRef(initialContextToken);
 
   useEffect(() => {
@@ -83,15 +88,18 @@ const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
       const r = await fetch("/api/customer/me", { cache: "no-store" });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) return;
-if (data.loggedIn) {
-          setCustomerLoggedIn(true);
-          setShippingAddress((prev) => ({
-            ...prev,
-            firstName: prev.firstName || String(data.firstName || ""),
-            lastName: prev.lastName || String(data.lastName || ""),
-            email: prev.email || String(data.email || data.customerEmail || ""),
-          }));
-        } else {
+      if (data.loggedIn) {
+        setCustomerLoggedIn(true);
+        setShippingAddress((prev) => ({
+          ...prev,
+          firstName: prev.firstName || String(data.firstName || ""),
+          lastName: prev.lastName || String(data.lastName || ""),
+          email: prev.email || String(data.email || data.customerEmail || ""),
+        }));
+        if (typeof data.email === "string") {
+          setLoginEmail((prev) => prev || data.email);
+        }
+      } else {
         setCustomerLoggedIn(false);
       }
     } catch {
@@ -224,9 +232,56 @@ try {
     async function init() {
       await loadCustomer();
       await loadCart();
+      if (customerLoggedIn) {
+        setStep("address");
+      }
     }
     init();
   }, [initialContextToken, loadCart, loadCustomer]);
+
+  const isAuthRequiredError = (status: number, message: string) =>
+    status === 401 ||
+    status === 403 ||
+    /not logged in|nicht eingeloggt|login/i.test(message);
+
+  const loginAndContinue = async () => {
+    if (!loginEmail || !loginPassword) {
+      setError("Bitte E-Mail und Passwort eingeben.");
+      return;
+    }
+
+    setLoginSubmitting(true);
+    setError("");
+    try {
+      const r = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: loginEmail,
+          password: loginPassword,
+          contextToken: contextTokenRef.current,
+        }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setError(data?.error || "Login fehlgeschlagen.");
+        return;
+      }
+
+      if (typeof data?.contextToken === "string" && data.contextToken) {
+        applyContextToken(data.contextToken);
+      }
+      setCustomerLoggedIn(true);
+      setAuthRequired(false);
+      setShippingAddress((prev) => ({ ...prev, email: prev.email || loginEmail }));
+      await loadCart();
+      setStep("review");
+    } catch {
+      setError("Login nicht erreichbar.");
+    } finally {
+      setLoginSubmitting(false);
+    }
+  };
 
   const continueAsGuest = async () => {
     if (!shippingAddress.email) {
@@ -234,7 +289,7 @@ try {
       return false;
     }
 
-    setSubmitting(true);
+    setGuestSubmitting(true);
     setError("");
     try {
       const bill = sameAsShipping ? shippingAddress : billingAddress;
@@ -258,13 +313,14 @@ try {
         applyContextToken(data.contextToken);
       }
       setCustomerLoggedIn(true);
+      setAuthRequired(false);
       await loadCart();
       return true;
     } catch {
       setError("Gastbestellung nicht erreichbar.");
       return false;
     } finally {
-      setSubmitting(false);
+      setGuestSubmitting(false);
     }
   };
 
@@ -316,6 +372,7 @@ try {
       if (data.contextToken) {
         applyContextToken(data.contextToken);
       }
+      setAuthRequired(false);
       setOrderResult({
         id: typeof data?.order?.id === "string" ? data.order.id : undefined,
         orderNumber: typeof data?.order?.orderNumber === "string" ? data.order.orderNumber : undefined,
@@ -365,6 +422,7 @@ try {
       setContextToken("");
       contextTokenRef.current = "";
       setCustomerLoggedIn(false);
+      setAuthRequired(false);
     } catch (err) {
       setError("Warenkorb konnte nicht geleert werden.");
       console.error(err);
@@ -451,13 +509,10 @@ try {
                    ))}
                  </div>
                )}
-<button 
-                  onClick={() => setStep("shipping")} 
-                  disabled={!shippingAddress.firstName || !shippingAddress.lastName || !shippingAddress.street || !shippingAddress.zipcode || !shippingAddress.city}
-                  className="mt-6 w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-3 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Weiter zu Versand
-                </button>
+               <button onClick={() => setStep("shipping")}
+                 className="mt-6 w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-3 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">
+                 Weiter zu Versand
+               </button>
             </div>
           )}
 
@@ -487,17 +542,12 @@ try {
                       </label>
                     ))}
                   </div>}
-<div className="mt-6 flex gap-3">
-                  <button onClick={() => setStep("address")}
-                    className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
-                  <button 
-                    onClick={() => setStep("payment")} 
-                    disabled={!selectedShipping}
-                    className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Weiter zu Zahlung
-                  </button>
-                </div>
+               <div className="mt-6 flex gap-3">
+                 <button onClick={() => setStep("address")}
+                   className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
+                 <button onClick={() => setStep("payment")}
+                   className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">Weiter zu Zahlung</button>
+               </div>
             </div>
           )}
 
@@ -527,17 +577,12 @@ try {
                        </label>
                      ))}
                    </div>}
-<div className="mt-6 flex gap-3">
-                  <button onClick={() => setStep("shipping")}
-                    className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
-                  <button 
-                    onClick={() => setStep("review")} 
-                    disabled={!selectedPayment}
-                    className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Weiter zur Prüfung
-                  </button>
-                </div>
+               <div className="mt-6 flex gap-3">
+                 <button onClick={() => setStep("shipping")}
+                   className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
+                 <button onClick={() => setStep("review")}
+                   className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">Weiter zur Prüfung</button>
+               </div>
             </div>
           )}
 

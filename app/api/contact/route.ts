@@ -22,10 +22,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const supportEmail = process.env.CONTACT_EMAIL || process.env.SMTP_USER;
+    if (!supportEmail) {
+      return NextResponse.json(
+        { error: "Support-E-Mail ist nicht konfiguriert" },
+        { status: 500 }
+      );
+    }
+
     await transporter.sendMail({
-      from: `"Website Kontakt" <${process.env.SMTP_USER}>`,
-      to: process.env.CONTACT_EMAIL || process.env.SMTP_USER,
-      subject: `Neue Kontaktanfrage von ${name}`,
+      from: `"Website Support" <${process.env.SMTP_USER || supportEmail}>`,
+      to: supportEmail,
+      replyTo: email,
+      subject: `Neue Support-Anfrage von ${name}`,
       text: `Name: ${name}\nE-Mail: ${email}\n\nNachricht:\n${message}`,
     });
 

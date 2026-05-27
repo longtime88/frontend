@@ -5,11 +5,7 @@ export async function POST() {
   
   response.cookies.delete("sw-context-token");
   response.cookies.delete("sw-customer-token");
-  
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("sw-context-token");
-  }
-  
+
   return response;
 }
 

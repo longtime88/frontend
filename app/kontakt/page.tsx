@@ -22,6 +22,7 @@ export default function KontaktPage() {
         body: JSON.stringify({
           name: formData.get("name"),
           email: formData.get("email"),
+          subject: formData.get("subject"),
           message: formData.get("message"),
         }),
       });
@@ -39,91 +40,130 @@ export default function KontaktPage() {
   }
 
   return (
-    <section className="relative mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-14">
-      <div className="pointer-events-none absolute -right-8 top-10 h-56 w-56 rounded-full bg-[color:var(--glow)] blur-3xl" />
-      <div className="pointer-events-none absolute -left-8 bottom-4 h-52 w-52 rounded-full bg-[color:var(--glow)] blur-3xl" />
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <nav className="mb-6 text-sm text-gray-600">
+          <a href="/" className="hover:text-orange-600">Startseite</a> &rsaquo; <span>Kontakt</span>
+        </nav>
 
-      <div className="grid gap-6 md:grid-cols-[1.02fr,0.98fr]">
-        <div className="rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-7 shadow-glow md:p-10">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Kontakt</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-5xl">
-            Lass uns dein Projekt starten
-          </h1>
-          <p className="mt-4 text-sm leading-relaxed text-[color:var(--muted)] md:text-base">
-            Schick mir dein Ziel, den gewünschten Zeitrahmen und dein Budget. Du bekommst eine klare Einschätzung
-            mit nächsten Schritten.
-          </p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Kontaktieren Sie uns</h1>
+        <p className="text-gray-600 mb-8">
+          Unser Kundenservice steht Ihnen gerne zur Verfügung. Füllen Sie das Formular aus, um uns Ihre Frage zu stellen.
+        </p>
 
-          <div className="mt-8 space-y-3 text-sm text-[color:var(--muted)]">
-            <p>• Shopware Frontend & Checkout</p>
-            <p>• Portfolio / Landingpage Entwicklung</p>
-            <p>• Plugin-Entwicklung & API-Integrationen</p>
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h2 className="font-bold text-gray-900 mb-4">Kundendienst</h2>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="font-medium text-gray-700">E-Mail</p>
+                  <p className="text-gray-600">support@ihrefirma.de</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Telefon</p>
+                  <p className="text-gray-600">+49 123 456789</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Öffnungszeiten</p>
+                  <p className="text-gray-600">Mo-Fr: 9:00 - 18:00 Uhr</p>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <h3 className="font-medium text-gray-900 mb-2">Versand & Rückgabe</h3>
+                <p className="text-sm text-gray-600">
+                  Kostenlose Rücksendung innerhalb von 30 Tagen.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-[color:var(--line)] bg-[rgba(79,158,255,0.08)] p-4 text-sm">
-              <p className="font-bold text-[color:var(--brand)]">Antwortzeit</p>
-              <p className="mt-1 text-[color:var(--muted)]">In der Regel innerhalb von 24h.</p>
-            </div>
-            <div className="rounded-2xl border border-[color:var(--line)] bg-[rgba(56,200,224,0.08)] p-4 text-sm">
-              <p className="font-bold text-[color:var(--accent)]">Projektstart</p>
-              <p className="mt-1 text-[color:var(--muted)]">Nach Abstimmung schnell umsetzbar.</p>
-            </div>
+          <div className="lg:col-span-2">
+            <form onSubmit={handleSubmit} className="border border-gray-200 rounded-lg p-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name *
+                  </label>
+                  <input
+                    required
+                    name="name"
+                    type="text"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    placeholder="Max Mustermann"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    E-Mail *
+                  </label>
+                  <input
+                    required
+                    name="email"
+                    type="email"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    placeholder="max@beispiel.de"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefon
+                  </label>
+                  <input
+                    name="phone"
+                    type="tel"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    placeholder="+49 123 456789"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Betreff *
+                  </label>
+                  <input
+                    required
+                    name="subject"
+                    type="text"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    placeholder="Frage zu Ihrer Bestellung"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nachricht *
+                  </label>
+                  <textarea
+                    required
+                    name="message"
+                    rows={6}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    placeholder="Bitte beschreiben Sie Ihr Anliegen..."
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || sent}
+                className="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-6 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Wird gesendet..." : sent ? "Nachricht gesendet ✓" : "Nachricht senden"}
+              </button>
+            </form>
           </div>
         </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-3xl border border-[color:var(--line)] bg-[color:var(--surface)] p-6 shadow-glow transition duration-300 md:p-8"
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-[color:var(--ink)]">Name</label>
-              <input
-                required
-                name="name"
-                type="text"
-                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
-                placeholder="Max Mustermann"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-[color:var(--ink)]">E-Mail</label>
-              <input
-                required
-                name="email"
-                type="email"
-                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
-                placeholder="max@beispiel.de"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-[color:var(--ink)]">Projektanfrage</label>
-              <textarea
-                required
-                name="message"
-                rows={5}
-                className="w-full rounded-xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--brand)]/15"
-                placeholder="Was soll gebaut werden? Welche Deadline gibt es?"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <p className="mt-4 text-sm text-red-400">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || sent}
-            className="mt-5 w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[color:var(--accent)] py-3 text-sm font-bold text-white transition duration-300 hover:-translate-y-0.5 hover:shadow-glow disabled:opacity-50"
-          >
-            {loading ? "Wird gesendet..." : sent ? "Gesendet ✓" : "Anfrage senden"}
-          </button>
-        </form>
       </div>
-    </section>
+    </div>
   );
 }
