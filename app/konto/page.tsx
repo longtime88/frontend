@@ -89,7 +89,7 @@ export default function KontoPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-3xl px-4 py-12">
         <nav className="text-sm text-gray-600 mb-6">
-          <a href="/" className="hover:text-orange-600">Startseite</a> &rsaquo; <span>Konto</span>
+          <Link href="/" className="hover:text-orange-600">Startseite</Link> &rsaquo; <span>Konto</span>
         </nav>
 
         <div className="border border-gray-200 rounded-md p-6">

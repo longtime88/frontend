@@ -7,11 +7,13 @@ const storefrontBaseUrl = rawStorefrontBaseUrl.replace(/\/+$/, "");
 // Für API-Aufrufe sollten stattdessen die /api/* Routen verwendet werden
 export const SHOPWARE_CART_URL = `${storefrontBaseUrl}/checkout/cart`;
 export const SHOPWARE_CONFIRM_URL = `${storefrontBaseUrl}/checkout/confirm`;
+export const SHOPWARE_LINE_ITEM_ADD_URL = `${storefrontBaseUrl}/checkout/line-item/add`;
 export const SHOPWARE_ACCOUNT_REGISTER_URL = `${storefrontBaseUrl}/account/login#register`;
 
 export function getMediaUrl(mediaUrl: string | null | undefined): string {
   if (!mediaUrl) return "";
-  return mediaUrl.replace(/^https?:\/\/[^\/]+(\/media)?/, "/media");
+  const pathWithoutQuery = mediaUrl.replace(/\?.*$/, "");
+  return pathWithoutQuery.replace(/^https?:\/\/[^\/]+(\/media)?/, "/media");
 }
 
 export function getShopwareApiBase(): string {

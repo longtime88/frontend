@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 import HomeIcon from "@mui/icons-material/Home";
 import InfoIcon from "@mui/icons-material/Info";
@@ -133,9 +134,11 @@ export default function Header() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0 mr-6">
-            <img
+            <Image
               src="/logo-amazon.svg"
               alt="Molinka"
+              width={120}
+              height={20}
               className="h-[20px] w-auto"
             />
             <span className="text-white font-semibold tracking-wide">Molinka</span>

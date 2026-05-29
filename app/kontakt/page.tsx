@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 export default function KontaktPage() {
@@ -43,7 +44,7 @@ export default function KontaktPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-3xl px-4 py-12">
         <nav className="mb-6 text-sm text-gray-600">
-          <a href="/" className="hover:text-orange-600">Startseite</a> &rsaquo; <span>Kontakt</span>
+          <Link href="/" className="hover:text-orange-600">Startseite</Link> &rsaquo; <span>Kontakt</span>
         </nav>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Kontaktieren Sie uns</h1>

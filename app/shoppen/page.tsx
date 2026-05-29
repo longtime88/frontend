@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getMediaUrl, getShopwareApiBase } from "@/lib/shopwareStorefront";
@@ -83,7 +84,7 @@ export default async function ShoppenPage({ searchParams }: ShoppenPageProps) {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-900">Digitale Produkte</h1>
             <nav className="text-sm text-gray-600">
-              <a href="/" className="hover:text-orange-600">Startseite</a> &rsaquo; Shoppen
+              <Link href="/" className="hover:text-orange-600">Startseite</Link> &rsaquo; Shoppen
             </nav>
           </div>
         </div>
@@ -123,10 +124,11 @@ export default async function ShoppenPage({ searchParams }: ShoppenPageProps) {
                   >
                     <div className="aspect-[4/3] bg-gray-100 relative">
                       {p.image ? (
-                        <img
+                        <Image
                           src={p.image}
                           alt={p.name}
-                          className="h-full w-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-4xl text-gray-300">

@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       (typeof data?.token === "string" ? data.token : "");
 
     if (!upstream.ok) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         {
           error:
             (data?.errors?.[0]?.detail ||
@@ -119,6 +119,18 @@ export async function POST(request: Request) {
         },
         { status: upstream.status }
       );
+
+      if (nextContextToken) {
+        res.cookies.set("sw-context-token", nextContextToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 30,
+          path: "/",
+        });
+      }
+
+      return res;
     }
 
     const cartErrors =
@@ -142,11 +154,23 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       ok: true,
       cart: data,
       contextToken: nextContextToken || undefined,
     });
+
+    if (nextContextToken) {
+      res.cookies.set("sw-context-token", nextContextToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
+      });
+    }
+
+    return res;
   } catch {
     return NextResponse.json(
       { error: "Shopware Cart API ist nicht erreichbar." },

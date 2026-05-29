@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { SHOPWARE_CART_URL } from "@/lib/shopwareStorefront";
+import { SHOPWARE_CART_URL, SHOPWARE_LINE_ITEM_ADD_URL } from "@/lib/shopwareStorefront";
 import { getCustomCartItems, mergeCartWithCustom, addProductToShopwareCart, resolveShopwareProductId } from "@/lib/shopwareCart";
 
 type Address = { firstName: string; lastName: string; email?: string; street: string; streetAdditional?: string; city: string; zipcode: string; countryId?: string; company?: string; salutationId?: string | null };
@@ -52,7 +52,6 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
   const [cartItems, setCartItems] = useState<Array<{ id: string; label: string; quantity: number; priceTotal: number; cover?: string | { media?: { url?: string; translated?: { alt?: string } } }; referencedId?: string }>>([]);
   const [cartTotal, setCartTotal] = useState(0);
   const [shippingCostsRaw, setShippingCostsRaw] = useState(0);
-  const [countryId, setCountryId] = useState(DEFAULT_COUNTRY);
   const [contextToken, setContextToken] = useState(initialContextToken);
 
   const [shippingAddress, setShippingAddress] = useState<Address>(initialAddress);
@@ -62,13 +61,8 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
   const [selectedShipping, setSelectedShipping] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPayment, setSelectedPayment] = useState("");
-  const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
+  const [orderResult] = useState<OrderResult | null>(null);
   const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
-  const [authRequired, setAuthRequired] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginSubmitting, setLoginSubmitting] = useState(false);
-  const [guestSubmitting, setGuestSubmitting] = useState(false);
   const contextTokenRef = useRef(initialContextToken);
 
   useEffect(() => {
@@ -96,9 +90,6 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
           lastName: prev.lastName || String(data.lastName || ""),
           email: prev.email || String(data.email || data.customerEmail || ""),
         }));
-        if (typeof data.email === "string") {
-          setLoginEmail((prev) => prev || data.email);
-        }
       } else {
         setCustomerLoggedIn(false);
       }
@@ -157,16 +148,6 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
       // sum(priceTotal) der Artikel + deliveries-shipping = echter Gesamtpreis.
       const cartRecord = data.cart as Record<string, unknown> | undefined;
       const deliveries = (cartRecord?.deliveries as Array<Record<string, unknown>>) ?? [];
-      const shippingLocation = deliveries[0]?.shippingLocation as Record<string, unknown> | undefined;
-      const shippingLocationAddress = shippingLocation?.address as Record<string, unknown> | undefined;
-      const detectedCountryId = String(
-        shippingLocationAddress?.countryId ||
-        (shippingLocationAddress?.country as Record<string, unknown> | undefined)?.id ||
-        ""
-      );
-      if (detectedCountryId) {
-        setCountryId(detectedCountryId);
-      }
       const deliveryShipping = (deliveries[0]?.shippingCosts as Record<string, unknown> | undefined)?.totalPrice
         ? Math.round(Number((deliveries[0]?.shippingCosts as Record<string, unknown>)?.totalPrice) * 100)
         : 0;
@@ -232,154 +213,57 @@ try {
     async function init() {
       await loadCustomer();
       await loadCart();
-      if (customerLoggedIn) {
-        setStep("address");
-      }
     }
     init();
   }, [initialContextToken, loadCart, loadCustomer]);
-
-  const isAuthRequiredError = (status: number, message: string) =>
-    status === 401 ||
-    status === 403 ||
-    /not logged in|nicht eingeloggt|login/i.test(message);
-
-  const loginAndContinue = async () => {
-    if (!loginEmail || !loginPassword) {
-      setError("Bitte E-Mail und Passwort eingeben.");
-      return;
-    }
-
-    setLoginSubmitting(true);
-    setError("");
-    try {
-      const r = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: loginEmail,
-          password: loginPassword,
-          contextToken: contextTokenRef.current,
-        }),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setError(data?.error || "Login fehlgeschlagen.");
-        return;
-      }
-
-      if (typeof data?.contextToken === "string" && data.contextToken) {
-        applyContextToken(data.contextToken);
-      }
-      setCustomerLoggedIn(true);
-      setAuthRequired(false);
-      setShippingAddress((prev) => ({ ...prev, email: prev.email || loginEmail }));
-      await loadCart();
-      setStep("review");
-    } catch {
-      setError("Login nicht erreichbar.");
-    } finally {
-      setLoginSubmitting(false);
-    }
-  };
-
-  const continueAsGuest = async () => {
-    if (!shippingAddress.email) {
-      setError("Bitte gib eine E-Mail in der Lieferadresse an, um als Gast zu bestellen.");
-      return false;
-    }
-
-    setGuestSubmitting(true);
-    setError("");
-    try {
-      const bill = sameAsShipping ? shippingAddress : billingAddress;
-      const r = await fetch("/api/checkout/guest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contextToken: contextTokenRef.current,
-          email: shippingAddress.email,
-          shippingAddress: { ...shippingAddress, countryId },
-          billingAddress: { ...bill, countryId, email: shippingAddress.email },
-        }),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        setError(data?.error || "Gastbestellung konnte nicht vorbereitet werden.");
-        return false;
-      }
-
-      if (typeof data?.contextToken === "string" && data.contextToken) {
-        applyContextToken(data.contextToken);
-      }
-      setCustomerLoggedIn(true);
-      setAuthRequired(false);
-      await loadCart();
-      return true;
-    } catch {
-      setError("Gastbestellung nicht erreichbar.");
-      return false;
-    } finally {
-      setGuestSubmitting(false);
-    }
-  };
 
   const placeOrder = async () => {
     if (cartItems.length === 0) {
       setError("Der Warenkorb ist leer. Bitte lege zuerst Produkte in den Warenkorb.");
       return;
     }
-    if (!selectedShipping || !selectedPayment) {
-      setError("Bitte waehle zuerst Versand- und Zahlungsart aus.");
-      return;
-    }
+    setError("");
 
-    if (!customerLoggedIn) {
-      const guestSuccess = await continueAsGuest();
-      if (!guestSuccess) return;
+    const productQuantities = new Map<string, number>();
+    for (const item of cartItems) {
+      const productId = resolveShopwareProductId(
+        String(item.referencedId || item.id).replace(/^custom:/, "")
+      );
+      if (!productId) {
+        setError(`"${item.label}" ist nicht mit einem Shopware-Produkt verknuepft.`);
+        return;
+      }
+      productQuantities.set(productId, (productQuantities.get(productId) || 0) + item.quantity);
     }
 
     setSubmitting(true);
-    setError("");
-    try {
-      const bill = sameAsShipping ? shippingAddress : billingAddress;
-      const lineItems = cartItems.map(i => ({
-        type: "product",
-        referencedId: i.referencedId || i.id,
-        quantity: i.quantity,
-      }));
 
-      const r = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lineItems,
-          contextToken: contextTokenRef.current,
-          shippingAddress: { ...shippingAddress, countryId },
-          billingAddress: { ...bill, countryId },
-          shippingMethod: selectedShipping,
-          paymentMethod: selectedPayment,
-        }),
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        const msg = data?.error || "Bestellung fehlgeschlagen.";
-        setError(msg);
-        setSubmitting(false);
-        return;
-      }
+    const form = document.createElement("form");
+    form.method = "post";
+    form.action = SHOPWARE_LINE_ITEM_ADD_URL;
+    form.style.display = "none";
 
-      if (data.contextToken) {
-        applyContextToken(data.contextToken);
-      }
-      setAuthRequired(false);
-      setOrderResult({
-        id: typeof data?.order?.id === "string" ? data.order.id : undefined,
-        orderNumber: typeof data?.order?.orderNumber === "string" ? data.order.orderNumber : undefined,
-      });
-      setStep("success");
-    } catch { setError("Shopware nicht erreichbar."); }
-    finally { setSubmitting(false); }
+    const appendInput = (name: string, value: string) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    };
+
+    appendInput("redirectTo", "frontend.checkout.confirm.page");
+
+    for (const [productId, quantity] of productQuantities) {
+      appendInput(`lineItems[${productId}][id]`, productId);
+      appendInput(`lineItems[${productId}][referencedId]`, productId);
+      appendInput(`lineItems[${productId}][type]`, "product");
+      appendInput(`lineItems[${productId}][stackable]`, "1");
+      appendInput(`lineItems[${productId}][removable]`, "1");
+      appendInput(`lineItems[${productId}][quantity]`, String(quantity));
+    }
+
+    document.body.appendChild(form);
+    form.submit();
   };
 
   // --- Warenkorb zuruecksetzen ---
@@ -422,7 +306,6 @@ try {
       setContextToken("");
       contextTokenRef.current = "";
       setCustomerLoggedIn(false);
-      setAuthRequired(false);
     } catch (err) {
       setError("Warenkorb konnte nicht geleert werden.");
       console.error(err);
@@ -634,7 +517,7 @@ try {
                    className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
                  <button onClick={placeOrder} disabled={submitting}
                    className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)] disabled:opacity-50">
-                   {submitting ? "Wird bearbeitet…" : "Jetzt kostenpflichtig bestellen"}
+                   {submitting ? "Weiterleitung…" : "Weiter zu PayPal / Shopware"}
                  </button>
                </div>
             </div>

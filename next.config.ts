@@ -14,13 +14,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "127.0.0.1" },
     ],
     localPatterns: [
-      {
-        pathname: "/images/**",
-        search: "",
-      },
+      { pathname: "/media/**", search: "" },
+      { pathname: "/**", search: "" },
     ],
     dangerouslyAllowSVG: true,
-    contentDispositionType: "attachment",
+    contentDispositionType: "inline",
   },
   /**
    * Proxy selected frontend calls to the backend API.
@@ -40,6 +38,12 @@ const nextConfig: NextConfig = {
       {
         source: "/media/:path*",
         destination: `${BACKEND_API_BASE}/media/:path*`,
+      },
+      {
+      
+        source: "/images/:path*",
+        destination: "/images/:path*",
+
       },
     ];
   },

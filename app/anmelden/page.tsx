@@ -106,9 +106,9 @@ export default function Anmelden() {
           <div className="mt-6 pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Noch keinen Account?{" "}
-              <Link href={SHOPWARE_ACCOUNT_REGISTER_URL} className="font-medium text-orange-600 hover:text-orange-700">
+              <a href={SHOPWARE_ACCOUNT_REGISTER_URL} className="font-medium text-orange-600 hover:text-orange-700">
                 Shopware Account erstellen
-              </Link>
+              </a>
             </p>
           </div>
         </div>
