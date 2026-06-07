@@ -13,6 +13,10 @@ import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 
+/**
+ * Header-Komponente mit responsivem Navigationsmenü.
+ * Enthält Suchleiste, Warenkorb, Konto-Dropdown und mobile Menü-Funktionalität.
+ */
 export default function Header() {
   const pathname = usePathname();
   const isKontaktPage = pathname === "/kontakt";
@@ -26,6 +30,11 @@ export default function Header() {
   const lastScrollY = useRef(0);
   const router = useRouter();
 
+  /**
+   * Scroll-Handler für Header-Verhalten.
+   * Versteckt den Header beim Scrollen nach unten (außerhalb der obersten 120px).
+   * Zeigt Header wieder beim Scrollen nach oben oder wenn mobile Menü offen ist.
+   */
   useEffect(() => {
     const onScroll = () => {
       const currentY = window.scrollY;
@@ -50,6 +59,11 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [mobileOpen]);
 
+  /**
+ * Synchronisiert den Login-Status mit dem Backend.
+ * Holt Kundendaten von /api/customer/me und aktualisiert State.
+ * Wird bei jedem Pfadwechsel ausgeführt.
+ */
   useEffect(() => {
     let active = true;
 
@@ -85,6 +99,10 @@ export default function Header() {
     };
   }, [pathname]);
 
+  /**
+   * Behandelt das Suchformular-Submit.
+   * Leitet zu /search?q=... um und schließt das mobile Menü.
+   */
   function handleSearch(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!query.trim()) return;
@@ -93,6 +111,10 @@ export default function Header() {
     setMobileOpen(false);
   }
 
+  /**
+   * Meldet den Benutzer ab.
+   * Ruft /api/logout auf, löscht Tokens aus localStorage und setzt State zurück.
+   */
   async function handleLogout() {
     try {
       await fetch("/api/logout", { method: "POST" });

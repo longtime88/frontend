@@ -4,6 +4,10 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Startseiten-Komponente mit Hintergrundbild.
+ * Zeigt Begrüßungstext, Call-to-Action Button und Statistiken.
+ */
 export default function Homepage() {
   return (
     <>

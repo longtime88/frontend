@@ -11,6 +11,10 @@ type CustomerMeResponse = {
   customerEmail?: string;
 };
 
+/**
+ * Konto-Seite mit Kundendaten-Anzeige.
+ * Lädt Daten asynchron von /api/customer/me und zeigt sie an.
+ */
 export default function KontoPage() {
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
