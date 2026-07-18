@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -14,16 +14,23 @@ export default function Anmelden() {
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const slowLoginTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (slowLoginTimer.current) {
+        clearTimeout(slowLoginTimer.current);
+      }
+    };
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setMessage("");
     setSuccess(false);
     setSubmitting(true);
-    setTimeout(() => {
-      if (submitting) {
-        setMessage("Anmeldung dauert länger als erwartet...");
-      }
+    slowLoginTimer.current = setTimeout(() => {
+      setMessage("Anmeldung dauert länger als erwartet...");
     }, 5000);
 
     try {
@@ -44,6 +51,10 @@ export default function Anmelden() {
     } catch {
       setMessage("Server nicht erreichbar");
     } finally {
+      if (slowLoginTimer.current) {
+        clearTimeout(slowLoginTimer.current);
+        slowLoginTimer.current = null;
+      }
       setSubmitting(false);
     }
   }

@@ -73,9 +73,8 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
     if (!token) return;
     setContextToken(token);
     contextTokenRef.current = token;
-    localStorage.setItem("sw-context-token", token);
-    document.cookie = `sw-context-token=${encodeURIComponent(token)}; path=/; max-age=2592000; samesite=lax`;
-  };
+    
+    
 
   const loadCustomer = useCallback(async () => {
     try {
@@ -188,7 +187,8 @@ const itemsTotal = deduped.reduce((s, it) => s + it.priceTotal, 0);
   }, []);
 
   const loadMethods = async (token: string) => {
-    const r = await fetch(`/api/checkout/methods?contextToken=${encodeURIComponent(token || "")}`);
+    const r = await fetch(`/api/checkout)?contextToken=${token}`);
+
     const data = await r.json();
     if (r.ok && data.ok) {
       setPaymentMethods(data.paymentMethods || []);
@@ -287,6 +287,21 @@ try {
         }
       }
 
+      
+      
+      const CheckoutClient = () => {
+
+        const [map, setMap] = useState<Map<string, number>>(new Map()); 
+        if (map.size === 0){
+          const map = new Map<string,number>();
+          map.set("item1", 2);
+          map.set("item2", 5);
+          setMap(map);
+        }
+
+                 
+      
+
       // Custom-Cart in localStorage leeren
       localStorage.removeItem("custom-cart-items");
 
@@ -294,8 +309,6 @@ try {
       // WICHTIG: Cookie muss ebenfalls geloescht werden, sonst
       // holt getShopwareContextToken() den alten Token zurueck
       // und loadCart() laedt die alten Artikel wieder.
-      localStorage.removeItem("sw-context-token");
-      document.cookie = "sw-context-token=; path=/; max-age=0; samesite=lax";
 
       // UI direkt auf leer setzen — KEIN loadCart() Aufruf,
       // sonst wird der Token wieder von Shopware geholt und die
