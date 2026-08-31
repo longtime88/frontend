@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+The gole is it, my fist  self create host OnlineShop frontend with shopware 6 plugins
+
 ## Getting Started
 
 First, run the development server:
