@@ -228,14 +228,14 @@ export default function Registrieren() {
                     id="password"
                     label="Passwort"
                     type={showPassword ? "text" : "password"}
-                    required
-                    minLength={8}
-                    autoComplete="new-password"
-                    value={form.password}
-                    onChange={(e) => updateField("password", e.target.value)}
-                    onFocus={() => setFocusedField("password")}
-                    onBlur={() => setFocusedField(null)}
-                    InputProps={{
+                  required
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={(e) => updateField("password", e.target.value)}
+                  onFocus={() => setFocusedField("password")}
+                  onBlur={() => setFocusedField(null)}
+                  inputProps={{ minLength: 8 }}
+                  InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
                           <LockOutline fontSize="small" className="text-gray-400" />
