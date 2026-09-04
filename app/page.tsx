@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
  * Startseiten-Komponente mit Hintergrundbild.
  * Zeigt Begrüßungstext, Call-to-Action Button und Statistiken.
  */
+
 export default function Homepage() {
   return (
     <>
@@ -18,8 +19,15 @@ export default function Homepage() {
               <h1 className="text-3xl font-bold text-white mb-4 md:text-4xl lg:text-5xl drop-shadow-lg">
                 Willkommmen bei Molinka 
               </h1>
+
+
+              <Link
+                href="/anmelden"
+                className="mb-4 inline-block rounded-md border border-white/50 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/15"
+              >
+                Anmelden
+              </Link>
               <p className="text-lg text-gray-200 max-w-2xl mx-auto mb-8 drop-shadow">
-                
               </p>
               <Link
                 href="/shoppen"

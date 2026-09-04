@@ -73,8 +73,7 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
     if (!token) return;
     setContextToken(token);
     contextTokenRef.current = token;
-    
-    
+  };
 
   const loadCustomer = useCallback(async () => {
     try {
@@ -187,7 +186,7 @@ const itemsTotal = deduped.reduce((s, it) => s + it.priceTotal, 0);
   }, []);
 
   const loadMethods = async (token: string) => {
-    const r = await fetch(`/api/checkout)?contextToken=${token}`);
+    const r = await fetch(`/api/checkout?contextToken=${encodeURIComponent(token)}`);
 
     const data = await r.json();
     if (r.ok && data.ok) {
@@ -286,21 +285,6 @@ try {
           return;
         }
       }
-
-      
-      
-      const CheckoutClient = () => {
-
-        const [map, setMap] = useState<Map<string, number>>(new Map()); 
-        if (map.size === 0){
-          const map = new Map<string,number>();
-          map.set("item1", 2);
-          map.set("item2", 5);
-          setMap(map);
-        }
-
-                 
-      
 
       // Custom-Cart in localStorage leeren
       localStorage.removeItem("custom-cart-items");
