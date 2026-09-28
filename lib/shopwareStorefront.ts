@@ -10,6 +10,15 @@ export const SHOPWARE_CONFIRM_URL = `${storefrontBaseUrl}/checkout/confirm`;
 export const SHOPWARE_LINE_ITEM_ADD_URL = `${storefrontBaseUrl}/checkout/line-item/add`;
 export const SHOPWARE_ACCOUNT_REGISTER_URL = `${storefrontBaseUrl}/account/login#register`;
 
+function stripQueryString(url: string): string {
+  return url.replace(/\?.*$/, "");
+}
+
+function normalizeMediaPath(mediaUrl: string): string {
+  const pathWithoutQuery = stripQueryString(mediaUrl);
+  return pathWithoutQuery.replace(/^https?:\/\/[^\/]+(\/media)?/, "/media");
+}
+
 /**
  * Transformiert externe Media-URLs in lokale Pfade für Next.js Image-Komponente.
  * Entfernt Query-Parameter (?ts=...), da Next.js Image Loader diese nicht unterstützt.
@@ -17,8 +26,7 @@ export const SHOPWARE_ACCOUNT_REGISTER_URL = `${storefrontBaseUrl}/account/login
  */
 export function getMediaUrl(mediaUrl: string | null | undefined): string {
   if (!mediaUrl) return "";
-  const pathWithoutQuery = mediaUrl.replace(/\?.*$/, "");
-  return pathWithoutQuery.replace(/^https?:\/\/[^\/]+(\/media)?/, "/media");
+  return normalizeMediaPath(mediaUrl);
 }
 
 /**
@@ -38,6 +46,34 @@ export function getStoreApiAccessKey(): string {
   return process.env.SHOPWARE_STORE_API_ACCESS_KEY || process.env.SHOPWARE_ACCESS_KEY || "";
 }
 
+function shouldRetryWithSelfSignedTls(): boolean {
+  return process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
+}
+
+async function fetchWithSelfSignedFallback(url: string, options: RequestInit, headers: Record<string, string>): Promise<Response> {
+  try {
+    return await fetch(url, { ...options, headers });
+  } catch {
+    if (!shouldRetryWithSelfSignedTls()) {
+      throw new Error("Shopware request failed");
+    }
+
+    const httpsUrl = url.replace(/^http:\/\//i, "https://");
+    const previousTlsSetting = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+    try {
+      return await fetch(httpsUrl, { ...options, headers });
+    } finally {
+      if (previousTlsSetting === undefined) {
+        delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+      } else {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = previousTlsSetting;
+      }
+    }
+  }
+}
+
 /**
  * Führt einen Fetch-Request zur Shopware API durch.
  * Beinhaltet Fallback für selbst-signierte SSL-Zertifikate (SHOPWARE_ALLOW_SELF_SIGNED=true).
@@ -49,27 +85,10 @@ async function shopwareFetch(
 ): Promise<{ rawText: string; response: Response }> {
   const baseUrl = getShopwareApiBase();
   const url = `${baseUrl}/store-api${path}`;
+  const response = await fetchWithSelfSignedFallback(url, options, headers);
+  const rawText = await response.text();
 
-  let resp: Response;
-  try {
-    resp = await fetch(url, { ...options, headers });
-  } catch {
-    if (process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true") {
-      const httpsUrl = url.replace(/^http:\/\//i, "https://");
-      const prev = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      try {
-        resp = await fetch(httpsUrl, { ...options, headers });
-      } finally {
-        if (prev === undefined) delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-        else process.env.NODE_TLS_REJECT_UNAUTHORIZED = prev;
-      }
-    } else {
-      throw new Error("Shopware request failed");
-    }
-  }
-  const rawText = await resp.text();
-  return { rawText, response: resp };
+  return { rawText, response };
 }
 
 export { shopwareFetch };

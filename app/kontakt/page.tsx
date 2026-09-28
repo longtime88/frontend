@@ -34,7 +34,7 @@ export default function KontaktPage() {
         setError("Fehler beim Senden. Bitte später erneut versuchen.");
       }
     } catch {
-      setError("Verbindungsfehler. Bitte prüfen Sie Ihre Internetverbindung.");
+      setError("Server nicht erreichbar.");
     } finally {
       setLoading(false);
     }

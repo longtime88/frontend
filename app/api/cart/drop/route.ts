@@ -122,8 +122,6 @@ export async function POST(request: Request) {
       .map((li) => String(li?.id ?? "").trim())
       .filter((id) => id.length > 0);
 
-    console.log("[api/cart/drop] ids:", ids);
-
     if (ids.length === 0) {
       return NextResponse.json({ ok: true, removed: 0 });
     }
@@ -131,8 +129,6 @@ export async function POST(request: Request) {
     // Alle Line-Items als Array entfernen (Shopware DELETE erwartet { "ids": [...] })
     const { ok } = await shopwareDelete("/checkout/cart/line-item", ids, headers);
     const removed = ok ? ids.length : 0;
-
-    console.log("[api/cart/drop] done, removed:", removed, "of", ids.length);
 
     return NextResponse.json({ ok: true, removed, total: ids.length });
   } catch (err) {

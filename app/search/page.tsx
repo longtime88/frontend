@@ -1,9 +1,8 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { addProductToShopwareCart, addCustomCartItem, resolveShopwareProductId } from "@/lib/shopwareCart";
-import { useRouter } from "next/navigation";
 
 type SearchProduct = {
   id: string;
@@ -22,6 +21,7 @@ function SearchContent() {
   const [results, setResults] = useState<SearchProduct[]>([]);
   const [addingProductId, setAddingProductId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     if (!query) {
@@ -45,21 +45,26 @@ function SearchContent() {
     load();
   }, [query]);
 
+  const getProductPrice = (product: SearchProduct) => {
+    if (typeof product.calculatedPrice?.unitPrice === "number") {
+      return product.calculatedPrice.unitPrice / 100;
+    }
+
+    if (typeof product.price === "number") {
+      return product.price;
+    }
+
+    return 0;
+  };
+
   const handleAddToCart = async (product: SearchProduct) => {
     setAddingProductId(product.id);
+    setFeedback(null);
     try {
       const shopwareId = resolveShopwareProductId(product.id);
       const customId = shopwareId || `custom:${product.id}`;
+      const price = getProductPrice(product);
 
-      // Preis ermitteln (preferiert unitPrice als EUR, fallback 0)
-      const price =
-        typeof product.calculatedPrice?.unitPrice === "number"
-          ? product.calculatedPrice.unitPrice / 100
-          : typeof product.price === "number"
-            ? product.price
-            : 0;
-
-      // Im Custom-Cart (Name + Preis) und im Shopware-Cart speichern
       addCustomCartItem({
         id: product.id,
         shopwareId: customId,
@@ -68,14 +73,17 @@ function SearchContent() {
         image: "/next.svg",
         quantity: 1,
       });
+
       if (shopwareId) {
         await addProductToShopwareCart(shopwareId, 1);
       }
+
+      setFeedback({ type: "success", message: `${product.name} wurde zum Warenkorb hinzugefügt.` });
       router.push(`/Checkout?product=${encodeURIComponent(product.id)}`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Produkt konnte nicht in den Warenkorb gelegt werden.";
-      alert(message);
+      setFeedback({ type: "error", message });
     } finally {
       setAddingProductId("");
     }
@@ -88,13 +96,25 @@ function SearchContent() {
 
       <div className="relative rounded-3xl border border-[color:var(--line)] bg-white p-6 shadow-[0_16px_40px_rgba(45,29,15,0.08)] md:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--accent)]">Suche</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)] md:text-4xl">
+        <h1 className="mt-2 text-3xl font-bold tracking-[0.02em] text-[color:var(--ink)] font-[family-name:var(--font-fraunces)] md:text-4xl">
           Ergebnisse fuer: <span className="text-[color:var(--brand)]">{query || "..."}</span>
         </h1>
         <p className="mt-3 text-sm text-[color:var(--muted)]">
           Finde passende Produkte, Templates oder Services und lege sie direkt in den Warenkorb.
         </p>
       </div>
+
+      {feedback && (
+        <div
+          className={`mt-8 rounded-2xl border p-4 text-sm font-medium ${
+            feedback.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
 
       {loading && (
         <div className="mt-8 rounded-2xl border border-[#eadfce] bg-[#fffaf3] p-5 text-sm font-semibold text-[color:var(--muted)]">
@@ -114,14 +134,14 @@ function SearchContent() {
             key={product.id}
             className="rounded-2xl border border-[color:var(--line)] bg-white p-5 shadow-[0_12px_32px_rgba(45,29,15,0.06)] transition duration-300 hover:-translate-y-1 hover:border-[color:var(--brand)]"
           >
-            <h3 className="text-xl font-semibold tracking-[0.02em] text-[color:var(--ink)] [font-family:var(--font-fraunces)]">
+            <h3 className="text-xl font-semibold tracking-[0.02em] text-[color:var(--ink)] font-[family-name:var(--font-fraunces)]">
               {product.name}
             </h3>
-<p className="mt-2 text-sm text-[color:var(--muted)]">
-                   {typeof product.calculatedPrice?.unitPrice === "number"
-                     ? `${(product.calculatedPrice.unitPrice / 100).toFixed(2)} €`
-                     : "Preis auf Anfrage"}
-                 </p>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">
+              {typeof product.calculatedPrice?.unitPrice === "number"
+                ? `${(product.calculatedPrice.unitPrice / 100).toFixed(2)} €`
+                : "Preis auf Anfrage"}
+            </p>
             <button
               type="button"
               className="mt-5 inline-flex items-center rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2 text-sm font-bold text-white transition duration-300 hover:-translate-y-0.5 hover:from-[color:var(--brand-deep)] hover:to-[#c05d2b] disabled:opacity-60"

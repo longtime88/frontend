@@ -7,8 +7,6 @@ import { getCustomCartItems, mergeCartWithCustom, addProductToShopwareCart, reso
 type Address = { firstName: string; lastName: string; email?: string; street: string; streetAdditional?: string; city: string; zipcode: string; countryId?: string; company?: string; salutationId?: string | null };
 type ShippingMethod = { id: string; name: string; description?: string; media?: { url?: string }; deliveryTime?: string };
 type PaymentMethod = { id: string; name: string; description?: string; media?: { url?: string }; formUrl?: string };
-type OrderResult = { id?: string; orderNumber?: string };
-
 const DEFAULT_COUNTRY = "f3e1b85c74df4e8fae2f3ef2da38e44f";
 
 const initialAddress: Address = { firstName: "", lastName: "", email: "", street: "", streetAdditional: "", city: "", zipcode: "", countryId: DEFAULT_COUNTRY };
@@ -40,7 +38,7 @@ type CheckoutClientProps = {
 };
 
 export default function Checkout({ initialContextToken }: CheckoutClientProps) {
-  const [step, setStep] = useState<"address" | "shipping" | "payment" | "review" | "success">("address");
+  const [step, setStep] = useState<"address" | "shipping" | "payment" | "review">("address");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -61,7 +59,6 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
   const [selectedShipping, setSelectedShipping] = useState("");
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPayment, setSelectedPayment] = useState("");
-  const [orderResult] = useState<OrderResult | null>(null);
   const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
   const contextTokenRef = useRef(initialContextToken);
 
@@ -520,28 +517,6 @@ try {
             </div>
           )}
 
-
-          {/* 5. Erfolg */}
-          {step === "success" && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
-              <h2 className="mb-2 text-lg font-bold text-emerald-800">Bestellung erfolgreich</h2>
-              <p className="text-sm text-emerald-700">
-                Deine Bestellung wurde uebermittelt.
-                {orderResult?.orderNumber ? ` Bestellnummer: ${orderResult.orderNumber}.` : ""}
-              </p>
-              {orderResult?.id && (
-                <p className="mt-2 text-xs text-emerald-700">Interne Order-ID: {orderResult.id}</p>
-              )}
-              <div className="mt-6 flex gap-3">
-                <button
-                  onClick={() => { window.location.href = "/"; }}
-                  className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-2.5 font-bold text-white hover:-translate-y-0.5 transition"
-                >
-                  Zur Startseite
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
          {/* Zusammenfassung sidebar */}

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 export default function CartLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,12 +9,6 @@ export default function CartLayout({ children }: { children: React.ReactNode }) 
     </div>
   );
 }
-
-
-
-
-
-
 
 
 

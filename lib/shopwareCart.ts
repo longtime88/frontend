@@ -1,6 +1,5 @@
 const CONTEXT_TOKEN_KEY = "sw-context-token";
 const CUSTOM_CART_KEY = "custom-cart-items";
-
 const SHOPWARE_HEX_ID_PATTERN = /^[0-9a-f]{32}$/i;
 
 function normalizeShopwareId(value: string): string {
@@ -9,9 +8,11 @@ function normalizeShopwareId(value: string): string {
 
 function readCookie(name: string): string {
   if (typeof document === "undefined") return "";
+
   const entry = document.cookie
     .split("; ")
     .find((item) => item.startsWith(`${name}=`));
+
   return entry ? decodeURIComponent(entry.split("=").slice(1).join("=")) : "";
 }
 
@@ -20,16 +21,64 @@ function writeCookie(name: string, value: string): void {
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=2592000; samesite=lax`;
 }
 
+function readStorageItem(key: string): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(key);
+}
+
+function writeStorageItem(key: string, value: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(key, value);
+}
+
+function stripCustomPrefix(id: string): string {
+  return id.startsWith("custom:") ? id.slice("custom:".length) : id;
+}
+
+function dedupeCustomItems(customItems: CustomCartItem[]): CustomCartItem[] {
+  const seen = new Set<string>();
+  const uniqueCustom: CustomCartItem[] = [];
+
+  for (let index = customItems.length - 1; index >= 0; index -= 1) {
+    const item = customItems[index];
+    if (!seen.has(item.shopwareId)) {
+      seen.add(item.shopwareId);
+      uniqueCustom.push(item);
+    }
+  }
+
+  return uniqueCustom.reverse();
+}
+
+function createSyntheticCustomCartLine(custom: CustomCartItem): Record<string, unknown> {
+  const totalPrice = custom.price * custom.quantity * 100;
+
+  return {
+    id: `custom:${custom.id}`,
+    referencedId: custom.shopwareId,
+    label: custom.name,
+    quantity: custom.quantity,
+    priceTotal: totalPrice,
+    price: { totalPrice },
+    cover: {
+      media: {
+        url: custom.image,
+        translated: { alt: custom.name },
+      },
+    },
+  };
+}
+
 // ─── Context Token ────────────────────────────────────────────
 
 export function getShopwareContextToken(): string {
   if (typeof window === "undefined") return "";
-  return localStorage.getItem(CONTEXT_TOKEN_KEY) || readCookie(CONTEXT_TOKEN_KEY) || "";
+  return readStorageItem(CONTEXT_TOKEN_KEY) || readCookie(CONTEXT_TOKEN_KEY) || "";
 }
 
 export function setShopwareContextToken(token: string): void {
   if (typeof window === "undefined" || !token) return;
-  localStorage.setItem(CONTEXT_TOKEN_KEY, token);
+  writeStorageItem(CONTEXT_TOKEN_KEY, token);
   writeCookie(CONTEXT_TOKEN_KEY, token);
 }
 
@@ -37,13 +86,15 @@ export function setShopwareContextToken(token: string): void {
 
 export function resolveShopwareProductId(input: string | number | undefined, fallback?: string): string {
   if (typeof fallback === "string") {
-    const n = normalizeShopwareId(fallback.trim());
-    if (SHOPWARE_HEX_ID_PATTERN.test(n)) return n;
+    const normalized = normalizeShopwareId(fallback.trim());
+    if (SHOPWARE_HEX_ID_PATTERN.test(normalized)) return normalized;
   }
+
   if (typeof input === "string") {
-    const n = normalizeShopwareId(input.trim());
-    if (SHOPWARE_HEX_ID_PATTERN.test(n)) return n;
+    const normalized = normalizeShopwareId(input.trim());
+    if (SHOPWARE_HEX_ID_PATTERN.test(normalized)) return normalized;
   }
+
   return "";
 }
 
@@ -60,20 +111,24 @@ export type CustomCartItem = {
 
 export function addCustomCartItem(item: CustomCartItem): void {
   if (typeof window === "undefined") return;
+
   const items = getCustomCartItems();
-  const existing = items.find((i) => i.shopwareId === item.shopwareId);
+  const existing = items.find((currentItem) => currentItem.shopwareId === item.shopwareId);
+
   if (existing) {
     existing.quantity += item.quantity;
   } else {
     items.push(item);
   }
-  localStorage.setItem(CUSTOM_CART_KEY, JSON.stringify(items));
+
+  writeStorageItem(CUSTOM_CART_KEY, JSON.stringify(items));
 }
 
 export function getCustomCartItems(): CustomCartItem[] {
   if (typeof window === "undefined") return [];
+
   try {
-    return JSON.parse(localStorage.getItem(CUSTOM_CART_KEY) || "[]");
+    return JSON.parse(readStorageItem(CUSTOM_CART_KEY) || "[]");
   } catch {
     return [];
   }
@@ -81,104 +136,104 @@ export function getCustomCartItems(): CustomCartItem[] {
 
 export function removeCustomCartItem(id: string): void {
   if (typeof window === "undefined") return;
-  const normalizedId = id.startsWith("custom:") ? id.slice("custom:".length) : id;
+
+  const normalizedId = stripCustomPrefix(id);
   const items = getCustomCartItems().filter(
-    (i) => i.id !== id && i.id !== normalizedId && i.shopwareId !== id
+    (item) => item.id !== id && item.id !== normalizedId && item.shopwareId !== id
   );
-  localStorage.setItem(CUSTOM_CART_KEY, JSON.stringify(items));
+
+  writeStorageItem(CUSTOM_CART_KEY, JSON.stringify(items));
 }
 
 export function mergeCartWithCustom(
   shopwareItems: Record<string, unknown>,
   customItems: CustomCartItem[]
 ): Array<Record<string, unknown>> {
-
-  // Normalisiere customItems: behalte pro shopwareId nur den letzten Eintrag
-  const seenCustom = new Set<string>();
-  const uniqueCustom: CustomCartItem[] = [];
-  for (let i = customItems.length - 1; i >= 0; i--) {
-    const c = customItems[i];
-    if (!seenCustom.has(c.shopwareId)) {
-      seenCustom.add(c.shopwareId);
-      uniqueCustom.push(c);
-    }
-  }
-  uniqueCustom.reverse();
-
-  // Set zum kollisionsfreien Zusammenführen (dedup nach id UND nach shopwareId)
+  const uniqueCustom = dedupeCustomItems(customItems);
   const mergedMap = new Map<string, Record<string, unknown>>();
-  for (const li of Object.values(shopwareItems)) {
-    const swId = String((li as Record<string, unknown>).id ?? "");
-    if (!mergedMap.has(swId)) {
-      mergedMap.set(swId, li as Record<string, unknown>);
+
+  for (const lineItem of Object.values(shopwareItems)) {
+    const shopwareId = String((lineItem as Record<string, unknown>).id ?? "");
+    if (shopwareId && !mergedMap.has(shopwareId)) {
+      mergedMap.set(shopwareId, lineItem as Record<string, unknown>);
     }
   }
 
-  // Custom-Overlay anwenden und conflikt durch shopwareId auflösen
-  const byShopware = new Map<string, string>(); // shopwareId -> lineItem id
-  for (const [lineId, li] of mergedMap) {
-    const refId = String((li as Record<string, unknown>).referencedId ?? "");
-    if (refId) byShopware.set(refId, lineId);
+  const byShopware = new Map<string, string>();
+  for (const [lineId, lineItem] of mergedMap) {
+    const referencedId = String((lineItem as Record<string, unknown>).referencedId ?? "");
+    if (referencedId) byShopware.set(referencedId, lineId);
   }
 
-   for (const custom of uniqueCustom) {
-     if (byShopware.has(custom.shopwareId)) {
-       const existing = mergedMap.get(byShopware.get(custom.shopwareId)!)!;
-       mergedMap.set(byShopware.get(custom.shopwareId)!, {
-         ...existing,
-         label: custom.name,
-         price: { totalPrice: custom.price * 100 },
-         priceTotal: custom.price * custom.quantity * 100,
-         cover: { media: { url: custom.image, translated: { alt: custom.name } } },
-         quantity: custom.quantity,
-       });
-     } else {
-       const syntheticId = `custom:${custom.id}`;
-       mergedMap.set(syntheticId, {
-         id: syntheticId,
-         referencedId: custom.shopwareId,
-         label: custom.name,
-         quantity: custom.quantity,
-         priceTotal: custom.price * custom.quantity * 100,
-         price: { totalPrice: custom.price * custom.quantity * 100 },
-         cover: { media: { url: custom.image, translated: { alt: custom.name } } },
-       });
-     }
-   }
+  for (const custom of uniqueCustom) {
+    const matchingLineId = byShopware.get(custom.shopwareId);
 
-  // Finale Dedup: Falls mehrere Shopware-lineItems die gleiche referencedId tragen,
-  // behalte nur den ersten pro referencedId.
-  const byRef = new Map<string, Record<string, unknown>>();
+    if (matchingLineId) {
+      const existing = mergedMap.get(matchingLineId);
+      if (!existing) continue;
+
+      mergedMap.set(matchingLineId, {
+        ...existing,
+        label: custom.name,
+        price: { totalPrice: custom.price * 100 },
+        priceTotal: custom.price * custom.quantity * 100,
+        cover: {
+          media: {
+            url: custom.image,
+            translated: { alt: custom.name },
+          },
+        },
+        quantity: custom.quantity,
+      });
+
+      continue;
+    }
+
+    mergedMap.set(`custom:${custom.id}`, createSyntheticCustomCartLine(custom));
+  }
+
+  const byReference = new Map<string, Record<string, unknown>>();
   const result: Array<Record<string, unknown>> = [];
-  for (const li of mergedMap.values()) {
-    const refId = String((li as Record<string, unknown>).referencedId ?? "");
-    if (!refId || !byRef.has(refId)) {
-      byRef.set(refId || `rand-${Math.random()}`, li);
-      result.push(li);
+
+  for (const lineItem of mergedMap.values()) {
+    const referencedId = String((lineItem as Record<string, unknown>).referencedId ?? "");
+    const dedupeKey = referencedId || `rand-${Math.random()}`;
+
+    if (!byReference.has(dedupeKey)) {
+      byReference.set(dedupeKey, lineItem);
+      result.push(lineItem);
     }
   }
+
   return result;
 }
 
 // ─── Shopware Warenkorb (API) ─────────────────────────────────
 
-// Serielle Warteschlange: verhindert "concurrent write" Sperrungen in Shopware
 const cartQueue: Array<() => Promise<void>> = [];
 let cartBusy = false;
+
 async function runCartQueue(): Promise<void> {
-  if (cartBusy) return; // bereits aktiv, neuer Aufrufer warte via Promise-Kette
+  if (cartBusy) return;
+
   cartBusy = true;
+
   try {
     while (cartQueue.length > 0) {
-      const task = cartQueue.shift()!;
+      const task = cartQueue.shift();
+      if (!task) continue;
+
       try {
         await task();
-      } catch { /* Fehler wird bereits im Caller behandelt */ }
+      } catch {
+        // Fehler wird bereits im Caller behandelt.
+      }
     }
   } finally {
     cartBusy = false;
   }
 }
+
 function enqueueCart(task: () => Promise<void>): Promise<void> {
   cartQueue.push(task);
   return runCartQueue();
@@ -186,6 +241,7 @@ function enqueueCart(task: () => Promise<void>): Promise<void> {
 
 export async function addProductToShopwareCart(productId: string, quantity = 1): Promise<void> {
   const normalizedProductId = normalizeShopwareId(productId.trim());
+
   return enqueueCart(async () => {
     const contextToken = getShopwareContextToken();
     const previousToken = contextToken || "";
@@ -193,7 +249,11 @@ export async function addProductToShopwareCart(productId: string, quantity = 1):
     const response = await fetch("/api/cart/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: normalizedProductId, quantity, contextToken: contextToken || undefined }),
+      body: JSON.stringify({
+        productId: normalizedProductId,
+        quantity,
+        contextToken: contextToken || undefined,
+      }),
     });
 
     const data = await response.json().catch(() => ({}));
@@ -201,7 +261,6 @@ export async function addProductToShopwareCart(productId: string, quantity = 1):
       throw new Error(data?.error || `Add-to-cart fehlgeschlagen (HTTP ${response.status}).`);
     }
 
-    // Token aus Response oder Cookie zurückholen und speichern
     const returnedToken =
       (typeof data?.contextToken === "string" && data.contextToken) ||
       (typeof data?.token === "string" && data.token) ||
@@ -211,8 +270,7 @@ export async function addProductToShopwareCart(productId: string, quantity = 1):
       setShopwareContextToken(returnedToken);
     }
 
-    // Kurze Pause, bis Shopware den Write abgeschlossen hat
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
   });
 }
 
@@ -223,7 +281,10 @@ export async function removeProductFromShopwareCart(itemId: string): Promise<voi
     const response = await fetch("/api/cart/remove", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId, contextToken: contextToken || undefined }),
+      body: JSON.stringify({
+        itemId,
+        contextToken: contextToken || undefined,
+      }),
     });
 
     const data = await response.json().catch(() => ({}));
@@ -232,9 +293,9 @@ export async function removeProductFromShopwareCart(itemId: string): Promise<voi
     }
 
     if (data.contextToken && typeof window !== "undefined") {
-      localStorage.setItem("sw-context-token", data.contextToken);
+      writeStorageItem(CONTEXT_TOKEN_KEY, data.contextToken);
     }
 
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
   });
 }
