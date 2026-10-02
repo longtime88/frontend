@@ -2,7 +2,15 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { SHOPWARE_CART_URL, SHOPWARE_LINE_ITEM_ADD_URL } from "@/lib/shopwareStorefront";
-import { getCustomCartItems, mergeCartWithCustom, addProductToShopwareCart, resolveShopwareProductId } from "@/lib/shopwareCart";
+import {
+  addProductToShopwareCart,
+  getCustomCartItems,
+  mergeCartWithCustom,
+  removeCustomCartItem,
+  removeProductFromShopwareCart,
+  resolveShopwareProductId,
+  setCustomCartItemQuantity,
+} from "@/lib/shopwareCart";
 
 type Address = { firstName: string; lastName: string; email?: string; street: string; streetAdditional?: string; city: string; zipcode: string; countryId?: string; company?: string; salutationId?: string | null };
 type ShippingMethod = { id: string; name: string; description?: string; media?: { url?: string }; deliveryTime?: string };
@@ -37,8 +45,31 @@ type CheckoutClientProps = {
   initialContextToken: string;
 };
 
+type CheckoutStep = "cart" | "address" | "shipping" | "payment" | "review";
+type CartItem = {
+  id: string;
+  label: string;
+  quantity: number;
+  priceTotal: number;
+  cover?: string | { media?: { url?: string; translated?: { alt?: string } } };
+  referencedId?: string;
+};
+
+const checkoutSteps: Array<{ id: CheckoutStep; label: string }> = [
+  { id: "cart", label: "Warenkorb" },
+  { id: "address", label: "Adresse" },
+  { id: "shipping", label: "Versand" },
+  { id: "payment", label: "Zahlung" },
+  { id: "review", label: "Prüfen" },
+];
+
+function coverUrl(cover: CartItem["cover"]): string {
+  if (typeof cover === "string") return cover;
+  return cover?.media?.url || "";
+}
+
 export default function Checkout({ initialContextToken }: CheckoutClientProps) {
-  const [step, setStep] = useState<"address" | "shipping" | "payment" | "review">("address");
+  const [step, setStep] = useState<CheckoutStep>("cart");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -47,7 +78,7 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
   const chargingDone = useRef(false);
   
 
-  const [cartItems, setCartItems] = useState<Array<{ id: string; label: string; quantity: number; priceTotal: number; cover?: string | { media?: { url?: string; translated?: { alt?: string } } }; referencedId?: string }>>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartTotal, setCartTotal] = useState(0);
   const [shippingCostsRaw, setShippingCostsRaw] = useState(0);
   const [contextToken, setContextToken] = useState(initialContextToken);
@@ -308,249 +339,93 @@ try {
     }
   };
 
-  // --- UI ---
+  const changeItemQuantity = async (item: CartItem, nextQuantity: number) => {
+    if (nextQuantity < 0) return;
+    setError("");
+
+    try {
+      if (item.id.startsWith("custom:")) {
+        setCustomCartItemQuantity(item.id, nextQuantity);
+        await loadCart();
+        return;
+      }
+
+      const productId = resolveShopwareProductId(item.referencedId || item.id);
+      if (!productId) {
+        setError("Die Menge dieses Artikels kann nicht geändert werden.");
+        return;
+      }
+
+      await removeProductFromShopwareCart(item.id);
+      if (nextQuantity > 0) await addProductToShopwareCart(productId, nextQuantity);
+      await loadCart();
+    } catch {
+      setError("Der Warenkorb konnte nicht aktualisiert werden.");
+    }
+  };
+
+  const removeItem = async (item: CartItem) => {
+    setError("");
+    try {
+      if (item.id.startsWith("custom:")) {
+        removeCustomCartItem(item.id);
+      } else {
+        await removeProductFromShopwareCart(item.id);
+      }
+      await loadCart();
+    } catch {
+      setError("Der Artikel konnte nicht entfernt werden.");
+    }
+  };
+
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[color:var(--bg)]">
-        <div className="text-center"><div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[color:var(--brand)]" /><p>Checkout wird geladen…</p></div>
-      </div>
-    );
+    return <div className="flex min-h-[60vh] items-center justify-center bg-[#fafbfd] text-[#0f172a]"><div className="text-center"><div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-[#e3e8f0] border-b-[#0e66e0]" /><p className="text-sm text-[#667287]">Warenkorb wird geladen…</p></div></div>;
   }
 
   const total = cartTotal + shippingCostsRaw;
+  const currentStepIndex = checkoutSteps.findIndex(({ id }) => id === step);
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8 md:py-14">
-      {/* Fortschritt - ohne login step */}
-      <div className="mb-8 flex items-center gap-2">
-        {["address", "shipping", "payment", "review"].map((s, i) => {
-          const labels: Record<string, string> = { address: "Adresse", shipping: "Versand", payment: "Zahlung", review: "Prüfen" };
-          const active = s === step;
-          const done = ["address", "shipping", "payment", "review"].indexOf(step) > i;
-          return (
-            <div key={s} className="flex flex-1 items-center">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium
-                ${done ? "bg-emerald-600 text-white" : active ? "bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] text-white" : "bg-gray-100 text-gray-400 hover:bg-gray-200 transition-colors"}`}>
-                {done ? "✓" : i + 1}
-              </div>
-              <span className={`mx-2 hidden text-sm sm:inline ${active ? "font-semibold text-[color:var(--brand)]" : "text-gray-500"}`}>
-                {labels[s]}
-              </span>
-              {i < 3 && <div className={`mx-2 h-0.5 flex-1 ${done ? "bg-emerald-600" : active ? "bg-gradient-to-r from-[color:var(--brand)] to-[#e18244]" : "bg-gray-200"}`} />}
-            </div>
-          );
-        })}
-      </div>
+    <section className="bg-[#fafbfd] text-[#0f172a]">
+      <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10 lg:py-14">
+        <div className="mb-9"><p className="text-xs font-semibold tracking-[0.12em] text-[#0e66e0]">BESTELLUNG</p><h1 className="mt-3 text-4xl font-bold tracking-[-0.045em] sm:text-[42px]">Dein Warenkorb</h1><p className="mt-3 text-[16px] text-[#667287]">Prüfe deine Auswahl und schließe deine Bestellung sicher ab.</p></div>
+        <ol className="mb-8 flex max-w-4xl items-center overflow-x-auto pb-2" aria-label="Bestellfortschritt">
+          {checkoutSteps.map(({ id, label }, index) => {
+            const active = id === step;
+            const done = index < currentStepIndex;
+            return <li key={id} className="flex shrink-0 items-center"><div className="flex items-center gap-2"><span className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-[13px] font-bold ${active ? "bg-[#0e66e0] text-white" : done ? "bg-[#1ac7b8] text-[#0f172a]" : "border border-[#e3e8f0] bg-white text-[#667287]"}`}>{done ? "✓" : index + 1}</span><span className={`text-sm ${active ? "font-semibold text-[#0f172a]" : "text-[#667287]"}`}>{label}</span></div>{index < checkoutSteps.length - 1 && <span className={`mx-3 h-0.5 w-10 sm:w-[72px] ${index < currentStepIndex || active ? "bg-[#0e66e0]" : "bg-[#e3e8f0]"}`} />}</li>;
+          })}
+        </ol>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Hauptbereich */}
-        <div className="lg:col-span-2 space-y-6">
-          {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-red-700">{error}</div>}
+        {error && <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-           {/* 1. Adresse */}
-           {step === "address" && (
-             <div className="rounded-2xl border border-[color:var(--line)] bg-white p-6 shadow-sm glass-card">
-               <h2 className="mb-6 text-xl font-bold">Lieferadresse</h2>
-               <div className="grid gap-6 sm:grid-cols-2">
-                 {addrFields.map(([label, field]) => (
-                   <div key={field} className={field === "street" ? "sm:col-span-2" : ""}>
-                     <label className="mb-2 block text-sm font-semibold uppercase tracking-wider text-[color:var(--muted)]">{label}</label>
-                     <input
-                       type={field === "email" ? "email" : "text"}
-                       value={shippingAddress[field] ?? ""}
-                       onChange={e => setShippingAddress(s => ({ ...s, [field]: e.target.value }))}
-                       className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-5 py-3 text-base outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20 transition-all duration-200 glass-input"
-                       placeholder={label}
-                     />
-                     </div>
-                 ))}
-               </div>
-               {customerLoggedIn && (
-                 <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-base font-semibold text-emerald-700">
-                   Eingeloggt: Bestellung wird deinem Kundenkonto zugeordnet.
-                 </p>
-               )}
-               <label className="mt-5 flex items-center gap-3 text-base text-[color:var(--muted)]">
-                 <input type="checkbox" checked={sameAsShipping} onChange={e => setSameAsShipping(e.target.checked)} className="rounded" />
-                 Rechnungsadresse ist identisch mit Lieferadresse
-               </label>
-               {!sameAsShipping && (
-                 <div className="mt-5 grid gap-6 sm:grid-cols-2">
-                   {shortFields.map(([label, field]) => (
-                     <div key={field} className={field === "street" ? "sm:col-span-2" : ""}>
-                       <label className="mb-2 block text-sm font-semibold uppercase tracking-wider text-[color:var(--muted)]">{label}</label>
-                       <input value={billingAddress[field] ?? ""} onChange={e => setBillingAddress(s => ({ ...s, [field]: e.target.value }))}
-                         className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-5 py-3 text-base outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20 transition-all duration-200 glass-input"
-                       />
-                     </div>
-                   ))}
-                 </div>
-               )}
-               <button onClick={() => setStep("shipping")}
-                 className="mt-6 w-full rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] py-3 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">
-                 Weiter zu Versand
-               </button>
-            </div>
-          )}
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_440px]">
+          <div className="min-w-0 space-y-5">
+            {step === "cart" && <>
+              <h2 className="text-2xl font-bold">Artikel ({cartItems.length})</h2>
+              {cartItems.length === 0 ? <div className="rounded-[18px] border border-dashed border-[#cfd8e5] bg-white p-8 text-center text-[#667287]">Dein Warenkorb ist leer.</div> : cartItems.map((item, index) => {
+                const image = coverUrl(item.cover);
+                return <article key={item.id} className="flex flex-col gap-5 rounded-[18px] bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center sm:p-6">
+                  <div className={`flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[14px] ${index % 2 ? "bg-[#dbf5f0]" : "bg-[#e8edff]"}`}>{image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <span className="text-3xl text-[#0e66e0]">●</span>}</div>
+                  <div className="min-w-0 flex-1"><h3 className="text-lg font-semibold">{item.label}</h3><p className="mt-1 text-sm text-[#667287]">Digitales Produkt · Sofort verfügbar</p><div className="mt-5 flex flex-wrap items-center gap-4"><div className="flex h-[34px] items-center rounded-lg bg-[#f5f7fc] text-sm"><button type="button" aria-label={`${item.label} Menge verringern`} onClick={() => void changeItemQuantity(item, item.quantity - 1)} className="h-full px-3 text-base text-[#333f55] hover:text-[#0e66e0]" disabled={item.quantity <= 1}>−</button><span className="w-7 text-center font-semibold">{item.quantity}</span><button type="button" aria-label={`${item.label} Menge erhöhen`} onClick={() => void changeItemQuantity(item, item.quantity + 1)} className="h-full px-3 text-base text-[#333f55] hover:text-[#0e66e0]">+</button></div><button type="button" onClick={() => void removeItem(item)} className="text-sm font-semibold text-[#0e66e0] hover:text-[#0b55b8]">Entfernen</button></div></div>
+                  <div className="text-left sm:self-start sm:text-right"><p className="text-lg font-bold">{fmtPrice(item.priceTotal)}</p><p className="mt-1 text-xs text-[#667287]">inkl. MwSt.</p></div>
+                </article>;
+              })}
+              <div className="rounded-[18px] bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.04)]"><h3 className="font-semibold">Gutschein oder Rabattcode</h3><div className="mt-4 flex gap-3"><input aria-label="Gutschein oder Rabattcode" placeholder="Code eingeben" className="min-w-0 flex-1 rounded-lg bg-[#f5f7fc] px-4 py-3 text-sm outline-none ring-[#0e66e0] focus:ring-2" /><button type="button" disabled className="rounded-[10px] border border-[#e3e8f0] bg-white px-5 py-3 text-sm font-semibold text-[#667287] disabled:cursor-not-allowed">Anwenden</button></div></div>
+              <p className="pt-4 text-center text-sm text-[#667287]">Noch nicht fertig? Du kannst jederzeit weitere Produkte hinzufügen.</p>
+            </>}
 
-          {/* 2. Versand */}
-          {step === "shipping" && (
-            <div className="rounded-2xl border border-[color:var(--line)] bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-bold">Versandart</h2>
-              {shippingMethods.length === 0
-                ? <p className="text-sm text-[color:var(--muted)]">Keine Versandarten verfügbar.</p>
-                : <div className="space-y-3">
-                    {shippingMethods.map(m => (
-                      <label key={m.id}
-                        className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition ${selectedShipping === m.id ? "border-[color:var(--brand)] bg-[color:var(--brand)]/5" : "border-[color:var(--line)] hover:border-[color:var(--brand)]/40"}`}>
-                        <input type="radio" name="shipping" value={m.id} checked={selectedShipping === m.id}
-                          onChange={() => setSelectedShipping(m.id)} className="sr-only" />
-                        {m.media?.url && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={m.media.url} alt="" className="h-8 w-8 rounded object-contain" />
-                        )}
-                        <div className="flex-1">
-                          <p className="font-semibold text-sm">{m.name}</p>
-                          {m.description && <p className="text-xs text-[color:var(--muted)]">{m.description}</p>}
-                        </div>
-                        <div className={`h-4 w-4 rounded-full border-2 ${selectedShipping === m.id ? "border-[color:var(--brand)] bg-[color:var(--brand)]" : "border-gray-300"}`}>
-                          {selectedShipping === m.id && <div className="m-auto h-2 w-2 rounded-full bg-white" />}
-                        </div>
-                      </label>
-                    ))}
-                  </div>}
-               <div className="mt-6 flex gap-3">
-                 <button onClick={() => setStep("address")}
-                   className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
-                 <button onClick={() => setStep("payment")}
-                   className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">Weiter zu Zahlung</button>
-               </div>
-            </div>
-          )}
+            {step === "address" && <div className="rounded-[18px] bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.04)] sm:p-8"><h2 className="mb-6 text-xl font-bold">Lieferadresse</h2><div className="grid gap-5 sm:grid-cols-2">{addrFields.map(([label, field]) => <label key={field} className={field === "street" ? "sm:col-span-2" : ""}><span className="mb-2 block text-sm font-semibold text-[#333f55]">{label}</span><input type={field === "email" ? "email" : "text"} value={shippingAddress[field] ?? ""} onChange={e => setShippingAddress(s => ({ ...s, [field]: e.target.value }))} className="w-full rounded-[10px] border border-[#e3e8f0] px-4 py-3 outline-none focus:border-[#0e66e0] focus:ring-2 focus:ring-[#0e66e0]/15" /></label>)}</div>{customerLoggedIn && <p className="mt-4 text-sm text-emerald-700">Eingeloggt: Bestellung wird deinem Kundenkonto zugeordnet.</p>}<label className="mt-5 flex gap-3 text-sm text-[#667287]"><input type="checkbox" checked={sameAsShipping} onChange={e => setSameAsShipping(e.target.checked)} />Rechnungsadresse ist identisch mit Lieferadresse</label>{!sameAsShipping && <div className="mt-5 grid gap-5 sm:grid-cols-2">{shortFields.map(([label, field]) => <label key={field} className={field === "street" ? "sm:col-span-2" : ""}><span className="mb-2 block text-sm font-semibold text-[#333f55]">{label}</span><input value={billingAddress[field] ?? ""} onChange={e => setBillingAddress(s => ({ ...s, [field]: e.target.value }))} className="w-full rounded-[10px] border border-[#e3e8f0] px-4 py-3 outline-none focus:border-[#0e66e0]" /></label>)}</div>}<button type="button" onClick={() => setStep("shipping")} className="mt-7 w-full rounded-[10px] bg-[#0f172a] py-3.5 text-sm font-semibold text-white hover:bg-[#26334d]">Weiter zu Versand</button></div>}
 
-          {/* 3. Zahlung */}
-          {step === "payment" && (
-            <div className="rounded-2xl border border-[color:var(--line)] bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-bold">Zahlungsart</h2>
-              {paymentMethods.length === 0
-                ? <p className="text-sm text-[color:var(--muted)]">Keine Zahlungsarten verfügbar.</p>
-                 : <div className="space-y-4">
-                     {paymentMethods.map(m => (
-                       <label key={m.id}
-                         className={`flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-5 transition-all duration-200 ${selectedPayment === m.id ? "border-[color:var(--brand)] bg-[color:var(--brand)]/5 shadow-glow" : "border-[color:var(--line)] hover:border-[color:var(--brand)]/40 hover:bg-white/5"}`}>
-                         <input type="radio" name="payment" value={m.id} checked={selectedPayment === m.id}
-                           onChange={() => setSelectedPayment(m.id)} className="sr-only" />
-                         {m.media?.url && (
-                           // eslint-disable-next-line @next/next/no-img-element
-                           <img src={m.media.url} alt="" className="h-10 w-auto rounded-xl object-contain" />
-                         )}
-                         <div className="flex-1">
-                           <p className="font-semibold text-base">{m.name}</p>
-                           {m.description && <p className="text-sm text-[color:var(--muted)]">{m.description}</p>}
-                         </div>
-                         <div className={`h-5 w-5 rounded-full border-2 ${selectedPayment === m.id ? "border-[color:var(--brand)] bg-[color:var(--brand)]" : "border-gray-300 hover:border-[color:var(--brand)]/40"}`}>
-                           {selectedPayment === m.id && <div className="m-auto h-3 w-3 rounded-full bg-white" />}
-                         </div>
-                       </label>
-                     ))}
-                   </div>}
-               <div className="mt-6 flex gap-3">
-                 <button onClick={() => setStep("shipping")}
-                   className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
-                 <button onClick={() => setStep("review")}
-                   className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)]">Weiter zur Prüfung</button>
-               </div>
-            </div>
-          )}
+            {step === "shipping" && <div className="rounded-[18px] bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.04)] sm:p-8"><h2 className="mb-5 text-xl font-bold">Versandart</h2>{shippingMethods.length === 0 ? <p className="text-sm text-[#667287]">Keine Versandarten verfügbar.</p> : <div className="space-y-3">{shippingMethods.map(m => <label key={m.id} className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 ${selectedShipping === m.id ? "border-[#0e66e0] bg-[#e8edff]/40" : "border-[#e3e8f0]"}`}><input type="radio" name="shipping" checked={selectedShipping === m.id} onChange={() => setSelectedShipping(m.id)} /><span><b className="text-sm">{m.name}</b>{m.description && <small className="mt-1 block text-[#667287]">{m.description}</small>}</span></label>)}</div>}<div className="mt-7 flex gap-3"><button type="button" onClick={() => setStep("address")} className="flex-1 rounded-[10px] border border-[#e3e8f0] py-3 text-sm font-semibold">Zurück</button><button type="button" onClick={() => setStep("payment")} className="flex-1 rounded-[10px] bg-[#0f172a] py-3 text-sm font-semibold text-white">Weiter zu Zahlung</button></div></div>}
 
-          {/* 4. Prüfung */}
-          {step === "review" && (
-            <div className="rounded-2xl border border-[color:var(--line)] bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-bold">Prüfe deine Bestellung</h2>
-              <div className="space-y-4 text-sm">
-                <div>
-                  <p className="font-semibold">Lieferadresse</p>
-                  <p className="text-[color:var(--muted)]">
-                    {shippingAddress.firstName} {shippingAddress.lastName}<br />
-                    {shippingAddress.email ? (<>{shippingAddress.email}<br /></>) : null}
-                    {shippingAddress.street}<br />
-                    {shippingAddress.zipcode} {shippingAddress.city}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">Versandart</p>
-                  <p className="text-[color:var(--muted)]">
-                    {shippingMethods.find(m => m.id === selectedShipping)?.name || "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">Zahlungsart</p>
-                  <p className="text-[color:var(--muted)]">
-                    {paymentMethods.find(m => m.id === selectedPayment)?.name || "—"}
-                  </p>
-                </div>
-                <div className="border-t border-[color:var(--line)] pt-4">
-                  <p className="font-semibold">Artikel ({cartItems.length})</p>
-                  {cartItems.map(item => (
-                    <div key={item.id} className="mt-1 flex items-center justify-between gap-4">
-                      <span className="text-[color:var(--muted)]">{item.label} × {item.quantity}</span>
-                      <span className="text-sm font-semibold text-[color:var(--ink)]">{fmtPrice(item.priceTotal)}</span>
-                    </div>
-                  ))}
-                  <div className="mt-2 flex justify-between border-t border-[color:var(--line)] pt-2 text-lg font-extrabold">
-                    <span>Gesamt</span>
-                    <span className="text-[color:var(--brand)]">{fmtPrice(total)}</span>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-[color:var(--line)] pt-3 text-2xl font-extrabold">
-                  <span>Zu zahlen</span><span className="text-[color:var(--brand)]">{fmtPrice(total)}</span>
-                </div>
-              </div>
-               <div className="mt-6 flex gap-3">
-                 <button onClick={() => setStep("payment")}
-                   className="flex-1 rounded-full border border-[color:var(--line)] px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-colors duration-200">Zurück</button>
-                 <button onClick={placeOrder} disabled={submitting}
-                   className="flex-1 rounded-full bg-gradient-to-r from-[color:var(--brand)] to-[#e18244] px-4 py-2.5 font-bold text-white hover:-translate-y-0 active:translate-y-0.5 transition-all duration-200 shadow-glow hover:shadow-[0_0_0_1px_var(--line),0_0_40px_var(--glow),0_8px_30px_rgba(0,0,0,0.22)] active:shadow-[0_0_0_1px_var(--line),0_0_20px_var(--glow),0_4px_15px_rgba(0,0,0,0.18)] disabled:opacity-50">
-                   {submitting ? "Weiterleitung…" : "Weiter zu PayPal / Shopware"}
-                 </button>
-               </div>
-            </div>
-          )}
+            {step === "payment" && <div className="rounded-[18px] bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.04)] sm:p-8"><h2 className="mb-5 text-xl font-bold">Zahlungsart</h2>{paymentMethods.length === 0 ? <p className="text-sm text-[#667287]">Keine Zahlungsarten verfügbar.</p> : <div className="space-y-3">{paymentMethods.map(m => <label key={m.id} className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 ${selectedPayment === m.id ? "border-[#0e66e0] bg-[#e8edff]/40" : "border-[#e3e8f0]"}`}><input type="radio" name="payment" checked={selectedPayment === m.id} onChange={() => setSelectedPayment(m.id)} /><span><b className="text-sm">{m.name}</b>{m.description && <small className="mt-1 block text-[#667287]">{m.description}</small>}</span></label>)}</div>}<div className="mt-7 flex gap-3"><button type="button" onClick={() => setStep("shipping")} className="flex-1 rounded-[10px] border border-[#e3e8f0] py-3 text-sm font-semibold">Zurück</button><button type="button" onClick={() => setStep("review")} className="flex-1 rounded-[10px] bg-[#0f172a] py-3 text-sm font-semibold text-white">Weiter zur Prüfung</button></div></div>}
 
+            {step === "review" && <div className="rounded-[18px] bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.04)] sm:p-8"><h2 className="mb-5 text-xl font-bold">Prüfe deine Bestellung</h2><div className="space-y-5 text-sm"><div><b>Lieferadresse</b><p className="mt-1 text-[#667287]">{shippingAddress.firstName} {shippingAddress.lastName}<br />{shippingAddress.email && <>{shippingAddress.email}<br /></>}{shippingAddress.street}<br />{shippingAddress.zipcode} {shippingAddress.city}</p></div><div><b>Versandart</b><p className="mt-1 text-[#667287]">{shippingMethods.find(m => m.id === selectedShipping)?.name || "—"}</p></div><div><b>Zahlungsart</b><p className="mt-1 text-[#667287]">{paymentMethods.find(m => m.id === selectedPayment)?.name || "—"}</p></div></div><div className="mt-7 flex gap-3"><button type="button" onClick={() => setStep("payment")} className="flex-1 rounded-[10px] border border-[#e3e8f0] py-3 text-sm font-semibold">Zurück</button><button type="button" onClick={placeOrder} disabled={submitting} className="flex-1 rounded-[10px] bg-[#0f172a] py-3 text-sm font-semibold text-white disabled:opacity-50">{submitting ? "Weiterleitung…" : "Weiter zu PayPal / Shopware"}</button></div></div>}
+          </div>
+
+          <aside className="lg:sticky lg:top-32"><div className="rounded-[18px] bg-white p-7 shadow-[0_12px_30px_rgba(15,23,42,0.05)]"><h2 className="text-[22px] font-bold">Bestellübersicht</h2><div className="mt-7 space-y-4">{cartItems.map(item => <div key={item.id} className="flex items-start justify-between gap-5 text-sm"><span className="font-medium text-[#333f55]">{item.label}{item.quantity > 1 && ` × ${item.quantity}`}</span><span className="shrink-0 font-semibold">{fmtPrice(item.priceTotal)}</span></div>)}</div><div className="mt-7 space-y-3 border-t border-[#e3e8f0] pt-6 text-sm"><div className="flex justify-between text-[#667287]"><span>Zwischensumme</span><span>{fmtPrice(cartTotal)}</span></div><div className="flex justify-between text-[#667287]"><span>Versand</span><span>{shippingCostsRaw === 0 ? "Kostenlos" : fmtPrice(shippingCostsRaw)}</span></div></div><div className="mt-6 flex justify-between border-t border-[#e3e8f0] pt-5 text-xl font-bold"><span>Gesamt</span><span className="text-[#0e66e0]">{fmtPrice(total)}</span></div><p className="mt-3 text-xs text-[#667287]">inkl. MwSt.</p>{step === "cart" ? <><button type="button" onClick={() => setStep("address")} disabled={cartItems.length === 0} className="mt-7 w-full rounded-[10px] bg-[#0f172a] py-3.5 text-sm font-semibold text-white hover:bg-[#26334d] disabled:cursor-not-allowed disabled:opacity-50">Sicher zur Kasse</button><p className="mt-4 text-center text-xs text-[#667287]">Sichere Bezahlung · Datenschutz · 30 Tage Rückgabe</p></> : <button type="button" onClick={resetCart} disabled={resetting || cartItems.length === 0} className="mt-7 w-full rounded-[10px] border border-red-200 bg-red-50 py-3 text-sm font-semibold text-red-600 disabled:opacity-50">{resetting ? "Wird geleert…" : "Warenkorb leeren"}</button>}</div></aside>
         </div>
-
-         {/* Zusammenfassung sidebar */}
-         <aside className="space-y-6">
-           <div className="sticky top-4 rounded-2xl border border-[color:var(--line)] bg-white p-8 shadow-lg">
-             <h2 className="mb-6 text-xl font-bold">Bestellübersicht</h2>
-             <div className="space-y-4 text-sm">
-               {cartItems.map(item => (
-                 <div key={item.id} className="flex justify-between py-2 border-b border-[color:var(--line)]/50 last:border-b-0">
-                   <span className="line-clamp-1">{item.label} × {item.quantity}</span>
-                   <span>{fmtPrice(item.priceTotal)}</span>
-                 </div>
-               ))}
-             </div>
-             <div className="mt-6 space-y-3 border-t border-[color:var(--line)] pt-6">
-               <div className="flex justify-between text-[color:var(--muted)]">
-                 <span>Zwischensumme</span><span>{fmtPrice(cartTotal)}</span>
-               </div>
-               <div className="flex justify-between text-[color:var(--muted)]">
-                 <span>Versand</span><span>{shippingCostsRaw === 0 ? "Kostenlos" : fmtPrice(shippingCostsRaw)}</span>
-               </div>
-             </div>
-             <div className="mt-5 flex justify-between border-t border-[color:var(--line)] pt-4 text-2xl font-extrabold">
-               <span>Gesamt</span><span className="text-[color:var(--brand)]">{fmtPrice(total)}</span>
-             </div>
-             <button
-               onClick={resetCart}
-               disabled={resetting || cartItems.length === 0}
-               className="mt-6 w-full rounded-xl border border-red-200 bg-red-50 px-6 py-3 text-base font-bold text-red-600 transition-all duration-200 hover:bg-red-100 active:bg-red-200 disabled:cursor-not-allowed disabled:opacity-40"
-             >
-               {resetting ? "Wird geleert…" : "Warenkorb leeren"}
-             </button>
-           </div>
-         </aside>
       </div>
     </section>
   );

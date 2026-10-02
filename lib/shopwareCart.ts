@@ -145,6 +145,20 @@ export function removeCustomCartItem(id: string): void {
   writeStorageItem(CUSTOM_CART_KEY, JSON.stringify(items));
 }
 
+export function setCustomCartItemQuantity(id: string, quantity: number): void {
+  if (typeof window === "undefined") return;
+
+  const normalizedId = stripCustomPrefix(id);
+  const items = getCustomCartItems()
+    .map((item) => {
+      const matches = item.id === id || item.id === normalizedId || item.shopwareId === normalizedId;
+      return matches ? { ...item, quantity } : item;
+    })
+    .filter((item) => item.quantity > 0);
+
+  writeStorageItem(CUSTOM_CART_KEY, JSON.stringify(items));
+}
+
 export function mergeCartWithCustom(
   shopwareItems: Record<string, unknown>,
   customItems: CustomCartItem[]
