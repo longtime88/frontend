@@ -1,10 +1,24 @@
-# Molinka Frontend
+# Molinka Frontend — Next.js Shopware 6 Storefront
 
-Dieses Repository ist ein Next.js-Frontend für einen modernen Shopware-Storefront-Workflow mit App Router, TypeScript und mehreren Shop- und Kundenfunktionen.
+Dieses Repository ist die Frontend-Schicht eines modernen E-Commerce-Ökosystems basierend auf Next.js 16, React 19 und Shopware 6.7. Das Frontend kommuniziert über ein Shopware-Backend mit erweiterten MVC-Plugins und bietet eine schnelle, moderne Storefront für Produkte, Services und Kundenprozesse.
 
-Das Frontend kommuniziert mit einem Backend über Next.js-Rewrites und behandelt dabei Warenkorb, Checkout, Anmeldung, Registrierung, Kundenprofil, Suche und Kontaktformulare.
+## Projektübersicht
 
-## Stack
+Das System besteht aus zwei Hauptteilen:
+
+- Frontend: dieses Repo (`longtime88/frontend`)
+  - Next.js App Router
+  - TypeScript
+  - Tailwind CSS + MUI
+  - Produktseiten, Warenkorb, Login, Registrierung, Checkout
+
+- Backend: `longtime88/shopware-backend`
+  - Shopware 6.7
+  - PHP / Symfony
+  - Custom MVC-Plugins
+  - Store-API und Shopware Commerce-Logik
+
+## Tech Stack
 
 - Next.js 16
 - React 19
@@ -13,6 +27,15 @@ Das Frontend kommuniziert mit einem Backend über Next.js-Rewrites und behandelt
 - MUI / Emotion
 - Vercel Analytics + Speed Insights
 - nodemailer
+- Shopware 6.7
+- PHP / Symfony
+
+## Verwandte Repositories
+
+- Frontend: `longtime88/frontend`
+- Shopware Backend: `longtime88/shopware-backend`
+- FastAPI: `longtime88/fastapi`
+- E-Commerce Präsentation: `longtime88/fachinformatiker-ecommerce`
 
 ## Projektstruktur
 
@@ -54,74 +77,183 @@ frontend/
 │   ├── shoppen/
 │   ├── ueber-uns/
 │   ├── Data.json
-│   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.tsx
+│   ├── page.tsx
 │   ├── manifest.json
-│   └── page.tsx
+│   └── favicon.ico
 ├── lib/
 │   ├── shopwareCart.ts
 │   └── shopwareStorefront.ts
-├── public/
-├── .gitignore
-├── AGENTS.md
-├── CLAUDE.md
-├── eslint.config.mjs
-├── frontend-api.js
 ├── middleware.ts
 ├── next.config.ts
 ├── package.json
 ├── package-lock.json
-├── postcss.config.mjs
 ├── tsconfig.json
-├── composer.json
-├── composer.lock
-└── README.md
+├── postcss.config.mjs
+├── eslint.config.mjs
+├── public/
+├── .gitignore
+├── AGENTS.md
+├── README.md
+└── composer.json
 ```
 
-## Wichtige Ordner
+## Architektur und Backend-Integration
 
-### app/
-Der Hauptbereich der App mit dem App Router von Next.js.
+Die Frontend-App nutzt Next.js-Rewrites und Proxy-Mechanismen, damit der Browser immer dieselbe Origin verwendet und CORS-Probleme vermieden werden.
 
-- `app/page.tsx`: Startseite mit Produkt-Highlight, Kategorien und Shop-CTA
-- `app/layout.tsx`: globale Layout-Struktur mit Header und Footer
-- `app/globals.css`: globale Styles
-- `app/components/`: wiederverwendbare UI-Komponenten wie Header, Footer, Produktkarten, Warenkorb
-- `app/api/`: API-Routen für Login, Cart, Search, Contact usw.
-- `app/shoppen`, `app/Warenkorb`, `app/konto`, `app/registrieren` etc.: Routen für die Shop- und Kundenfunktionen
+Beispiel:
 
-### lib/
-Enthält Logik für die Verbindung mit Shopware:
+- `/backend-api/:path*` → Backend API
+- `/store-api/:path*` → Shopware Store API
+- `/media/:path*` → Media-Dateien
 
-- `lib/shopwareStorefront.ts`: generische Shopware-Storefront-Funktionen
-- `lib/shopwareCart.ts`: Warenkorb-Logik und API-Aufrufe
+Das Frontend arbeitet somit mit dem Shopware-Backend zusammen, ohne direkt aus dem Browser heraus auf verschiedene Domänen oder Ports zuzugreifen.
+
+### Grundfluss
+
+```text
+Browser
+  ↓
+Next.js Frontend
+  ↓
+API Routes / Rewrites
+  ↓
+Shopware Store API / Backend
+  ↓
+Shopware Core + Plugins
+  ↓
+Datenbank / Produkte / Bestellungen / Kunden
+```
+
+## MVC-Plugin-System im Shopware-Backend
+
+Shopware arbeitet mit einem MVC-Plugin-Architekturmodell. Ein Plugin besteht typischerweise aus:
+
+- Model: Datenstrukturen und Entitäten
+- View: Templates, UI-Komponenten, Storefront-Erweiterungen
+- Controller: Logik für Requests / API-Aufrufe
+- Service: Business-Logik
+- Subscriber/Event-Listener: Reaktionen auf Shopware-Events
+
+### Beispiel: CheckoutCustomizer
+
+Das Plugin `custom/plugins/CheckoutCustomizer` ist ein gutes Beispiel für ein eigenes Shopware-MVC-Plugin.
+
+Dateistruktur:
+
+```text
+custom/plugins/CheckoutCustomizer/
+├── composer.json
+├── src/
+│   └── CheckoutCustomizer.php
+├── README.md
+└── tests/
+```
+
+Die zentrale Klasse sieht so aus:
+
+```php
+<?php declare(strict_types=1);
+
+namespace CheckoutCustomizer;
+
+use Shopware\Core\Framework\Plugin;
+
+class CheckoutCustomizer extends Plugin
+{
+}
+```
+
+Das bedeutet:
+
+- Das Plugin wird als Shopware-Plugin erkannt
+- Es kann Symfony-Services, Controller, Events und Views registrieren
+- Es kann die Storefront oder Checkout-Funktionalität erweitern
+
+### Typische Plugin-Struktur
+
+```text
+custom/plugins/MyPlugin/
+├── src/
+│   ├── Controller/
+│   ├── Service/
+│   ├── Subscriber/
+│   ├── Entity/
+│   └── MyPlugin.php
+├── Resources/
+│   ├── config/
+│   ├── views/
+│   └── app/
+├── composer.json
+├── README.md
+└── tests/
+```
+
+## Shopware-Plugins im Projekt
+
+Im Backend-Repo gibt es mehrere relevante Plugins:
+
+- `CheckoutCustomizer`
+  - für Bestell- und Checkout-Anpassungen
+
+- `SwagMigrationAssistant`
+  - für Migration von alten Datenexporten oder Shopware-Versionen
+  - unterstützt Migrationsprozesse zwischen Systemen
+
+- `SwagPayPal`
+  - Zahlung via PayPal
+
+Diese Plugins werden über `custom/plugins` in der Shopware-Installation eingebunden und sind Teil der MVC-Architektur des Shops.
+
+## Wichtige Dateien im Frontend
+
+### app/page.tsx
+Die Startseite zeigt unter anderem:
+
+- Hero-Bereich
+- Kategoriewahl
+- Produkt-Highlights
+- Shop-Calls
+- Vercel Analytics / Speed Insights
+
+### app/layout.tsx
+Globales Layout mit:
+
+- Header
+- Main-Bereich
+- Footer
+- eingebaute Fonts (`Manrope`, `Fraunces`)
 
 ### middleware.ts
-Implementiert einen einfachen Rate-Limit-Schutz für API-Endpunkte.
+Diese Datei setzt ein einfaches Rate Limiting für API-Requests um:
+
+- max. 30 Requests pro Minute
+- IP + User-Agent als Kennung
+- HTTP 429 bei Überschreitung
 
 ### next.config.ts
-Konfiguriert:
+Hier wird die Backend-Anbindung konfiguriert:
 
-- Bild-Remote-Patterns
-- Rewrites für Backend- und Store-API-Aufrufe
-- Proxying von `/backend-api`, `/store-api` und `/media`
+- Rewrites für `/backend-api`, `/store-api` und `/media`
+- Bildzugriffe für lokale und Remote-Hostnamen
 
 ## Entwicklung
 
-1. Abhängigkeiten installieren:
+1. Abhängigkeiten installieren
 
 ```bash
 npm install
 ```
 
-2. Entwicklungsserver starten:
+2. Entwicklungsserver starten
 
 ```bash
 npm run dev
 ```
 
-Danach öffnest du:
+3. Browser öffnen
 
 ```text
 http://localhost:3000
@@ -142,32 +274,49 @@ http://localhost:3000
 
 ## Umgebungsvariablen
 
-Das Frontend erwartet in der Regel eine Verbindung zum Backend:
+Im Frontend wird typischerweise eine `.env.local` verwendet:
 
 ```env
 BACKEND_API_URL=http://localhost:8000
 SHOPWARE_STORE_API_ACCESS_KEY=your_key_here
 ```
 
-Diese Werte werden für den Zugriff auf das Shopware-Backend und die internen Rewrite-Regeln verwendet.
+Diese Werte werden für die Verbindung zum Shopware-Backend und die Rewrites verwendet.
 
-## API-/Backend-Anbindung
+## API-Endpunkte
 
-Die App nutzt Next.js-Rewrites, damit der Browser immer dieselbe Origin nutzt und CORS-Probleme vermieden werden.
+Das Frontend enthält mehrere API-Routen:
 
-Beispiele:
+- `/api/cart/add`
+- `/api/cart/details`
+- `/api/cart/remove`
+- `/api/cart/drop`
+- `/api/login`
+- `/api/logout`
+- `/api/register`
+- `/api/customer/me`
+- `/api/search`
+- `/api/contact`
 
-- `/backend-api/...` -> Backend API
-- `/store-api/...` -> Shopware Store API
-- `/media/...` -> Media-Assets des Backends
+Diese werden von der Frontend-UI genutzt und kommunizieren mit dem Shopware-Backend.
 
-## Hinweise
+## Fazit
 
-- Die App nutzt ein App-Router-Setup (`app/`)
-- Für Produktdaten gibt es eine Fallback-Katalogdatei in `app/Data.json`
-- Die Startseite lädt Produkte dynamisch und fällt bei Problemen auf lokale Fallback-Daten zurück
-- Viele Seiten sind deutschsprachig und auf einen Shopware-/E-Commerce-Kontext zugeschnitten
+Dieses Projekt ist ein typisches Beispiel für eine moderne Full-Stack-E-Commerce-Architektur:
 
-## Ziel
+- Frontend in Next.js / React
+- Commerce-Logik im Shopware-Backend
+- Erweiterung durch MVC-Plugins
+- API-Integration zwischen Frontend und Backend
+- Flexible, modulare Architektur für digitale Shops
 
-Die Frontend-App dient als digitale Storefront für Produkte, Services und Kundenprozesse rund um einen modernen Shopware-Shop mit eigener Oberfläche und API-Integration.
+Das macht das Projekt gut für:
+
+- E-Commerce-Prototypen
+- Shopware-Storefronts
+- individuelle Frontend-Erweiterungen
+- Shopware-Integrationen mit eigener UI
+
+## Lizenz
+
+MIT License
