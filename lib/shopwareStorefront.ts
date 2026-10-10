@@ -7,7 +7,6 @@ const storefrontBaseUrl = rawStorefrontBaseUrl.replace(/\/+$/, "");
 // Für API-Aufrufe sollten stattdessen die /api/* Routen verwendet werden
 export const SHOPWARE_CART_URL = `${storefrontBaseUrl}/checkout/cart`;
 export const SHOPWARE_CONFIRM_URL = `${storefrontBaseUrl}/checkout/confirm`;
-export const SHOPWARE_LINE_ITEM_ADD_URL = `${storefrontBaseUrl}/checkout/line-item/add`;
 export const SHOPWARE_ACCOUNT_REGISTER_URL = `${storefrontBaseUrl}/account/login#register`;
 
 function stripQueryString(url: string): string {

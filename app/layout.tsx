@@ -20,8 +20,8 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Molinka Shop",
-  description: "Portfolio und digitaler Produktverkauf für Webentwicklung",
+  title: "Molinka — Digitale Produkte & Shopware",
+  description: "Digitale Produkte, Shopware-Lösungen und persönlicher Support für moderne Projekte.",
   manifest: "./app/manifest.json",
   
 };

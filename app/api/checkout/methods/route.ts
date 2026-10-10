@@ -16,7 +16,7 @@ function makeHeaders(contextToken: string): Record<string, string> {
   return headers;
 }
 
-async function shopwareFetch(path: string, options: RequestInit, headers: Record<string, string>): Promise<{ json: unknown }> {
+async function shopwareFetch(path: string, options: RequestInit, headers: Record<string, string>): Promise<{ response: Response; json: unknown }> {
   const baseUrl = getShopwareApiBase();
   const url = `${baseUrl}/store-api${path}`;
   
@@ -41,7 +41,7 @@ async function shopwareFetch(path: string, options: RequestInit, headers: Record
       throw new Error("Request failed");
     }
   }
-  return { json: await resp.json().catch(() => ({})) };
+  return { response: resp, json: await resp.json().catch(() => ({})) };
 }
 
 export async function GET(request: Request) {
@@ -54,10 +54,11 @@ export async function GET(request: Request) {
   const headers = makeHeaders(token);
 
   try {
-    const [paymentRes, shippingRes] = await Promise.all([
-      shopwareFetch("/payment-method", { method: "GET", cache: "no-store" }, headers),
-      shopwareFetch("/shipping-method", { method: "GET", cache: "no-store" }, headers),
-    ]);
+    const { response, json } = await shopwareFetch("/checkout/gateway", { method: "GET", cache: "no-store" }, headers);
+    if (!response.ok) {
+      const errors = (json as Record<string, unknown>)?.errors as Array<Record<string, unknown>> | undefined;
+      return NextResponse.json({ error: errors?.[0]?.detail || "Shopware-Checkout-Methoden konnten nicht geladen werden." }, { status: response.status });
+    }
 
     // Normalize: expected output is { id, name, description, media, formUrl }
     const norm = (item: Record<string, unknown>) => {
@@ -74,13 +75,9 @@ export async function GET(request: Request) {
       };
     };
 
-    const paymentMethods = (paymentRes.json as Record<string, unknown>)?.elements
-      ? (paymentRes.json as Record<string, unknown>).elements as Array<Record<string, unknown>>
-      : [];
-
-    const shippingMethods = (shippingRes.json as Record<string, unknown>)?.elements
-      ? (shippingRes.json as Record<string, unknown>).elements as Array<Record<string, unknown>>
-      : [];
+    const gateway = json as Record<string, unknown>;
+    const paymentMethods = ((gateway.paymentMethods as Record<string, unknown>)?.elements || []) as Array<Record<string, unknown>>;
+    const shippingMethods = ((gateway.shippingMethods as Record<string, unknown>)?.elements || []) as Array<Record<string, unknown>>;
 
     return NextResponse.json({
       ok: true,

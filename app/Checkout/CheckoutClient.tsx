@@ -1,15 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { SHOPWARE_CART_URL, SHOPWARE_LINE_ITEM_ADD_URL } from "@/lib/shopwareStorefront";
+import Image from "next/image";
 import {
   addProductToShopwareCart,
-  getCustomCartItems,
-  mergeCartWithCustom,
-  removeCustomCartItem,
   removeProductFromShopwareCart,
   resolveShopwareProductId,
-  setCustomCartItemQuantity,
 } from "@/lib/shopwareCart";
 
 type Address = { firstName: string; lastName: string; email?: string; street: string; streetAdditional?: string; city: string; zipcode: string; countryId?: string; company?: string; salutationId?: string | null };
@@ -91,6 +87,7 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPayment, setSelectedPayment] = useState("");
   const [customerLoggedIn, setCustomerLoggedIn] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState("");
   const contextTokenRef = useRef(initialContextToken);
 
   useEffect(() => {
@@ -136,17 +133,14 @@ export default function Checkout({ initialContextToken }: CheckoutClientProps) {
         applyContextToken(data.contextToken);
       }
 
-      const lineItems = data.cart?.lineItems || {};
-      const customItems = getCustomCartItems();
-      const merged = mergeCartWithCustom(lineItems, customItems);
-      const items = (merged as Array<Record<string, unknown>>).map((li) => {
+      const rawLineItems = Array.isArray(data.cart?.lineItems)
+        ? data.cart.lineItems as Array<Record<string, unknown>>
+        : Object.values((data.cart?.lineItems || {}) as Record<string, Record<string, unknown>>);
+      const items = rawLineItems.map((li) => {
         const shopwarePrice = (li.price as Record<string, unknown>)?.totalPrice;
-        const customPrice = li.priceTotal as number;
         let priceTotal = 0;
 
-        if (typeof customPrice === 'number' && customPrice > 0) {
-          priceTotal = customPrice;
-        } else if (typeof shopwarePrice === 'number') {
+        if (typeof shopwarePrice === 'number') {
           priceTotal = Math.round(shopwarePrice * 100);
         }
 
@@ -208,13 +202,13 @@ const itemsTotal = deduped.reduce((s, it) => s + it.priceTotal, 0);
 
       setLoading(false);
 
-      // Zahlungs- und Versandarten parallel laden
-      await Promise.all([loadMethods(nextToken), loadCartItems(nextToken)]);
+      // Verfügbare Zahlungs- und Versandarten direkt aus Shopware laden
+      await loadMethods(nextToken);
     } catch { setError("Server nicht erreichbar."); setLoading(false); }
   }, []);
 
   const loadMethods = async (token: string) => {
-    const r = await fetch(`/api/checkout?contextToken=${encodeURIComponent(token)}`);
+    const r = await fetch(`/api/checkout/methods?contextToken=${encodeURIComponent(token)}`);
 
     const data = await r.json();
     if (r.ok && data.ok) {
@@ -223,16 +217,6 @@ const itemsTotal = deduped.reduce((s, it) => s + it.priceTotal, 0);
       if (data.shippingMethods?.length > 0) setSelectedShipping(data.shippingMethods[0].id);
       if (data.paymentMethods?.length > 0) setSelectedPayment(data.paymentMethods[0].id);
     }
-  };
-
-  // WICHTIG: Versandmethode aus Warenkorb lesen und setzen
-  const loadCartItems = async (token: string) => {
-try {
-      const r = await fetch(`${SHOPWARE_CART_URL}?t=${token}`);
-      const html = await r.text();
-      const match = html.match(/name="shippingMethodId"\s+value="([^"]+)"/);
-      if (match?.[1]) setSelectedShipping(match[1]);
-    } catch { /* ignorieren */ }
   };
 
   useEffect(() => {
@@ -250,47 +234,66 @@ try {
       return;
     }
     setError("");
-
-    const productQuantities = new Map<string, number>();
-    for (const item of cartItems) {
-      const productId = resolveShopwareProductId(
-        String(item.referencedId || item.id).replace(/^custom:/, "")
-      );
-      if (!productId) {
-        setError(`"${item.label}" ist nicht mit einem Shopware-Produkt verknuepft.`);
-        return;
-      }
-      productQuantities.set(productId, (productQuantities.get(productId) || 0) + item.quantity);
-    }
-
     setSubmitting(true);
 
-    const form = document.createElement("form");
-    form.method = "post";
-    form.action = SHOPWARE_LINE_ITEM_ADD_URL;
-    form.style.display = "none";
+    try {
+      let activeContextToken = contextTokenRef.current;
 
-    const appendInput = (name: string, value: string) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      input.value = value;
-      form.appendChild(input);
-    };
+      // Gastadressen werden zuerst in Shopware als Gastkunde angelegt, damit
+      // Shopware sie im eigenen Checkout und in der Bestellung verwenden kann.
+      if (!customerLoggedIn) {
+        const guestResponse = await fetch("/api/checkout/guest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contextToken: activeContextToken,
+            email: shippingAddress.email,
+            shippingAddress,
+            billingAddress: sameAsShipping ? shippingAddress : billingAddress,
+          }),
+        });
+        const guestData = await guestResponse.json().catch(() => ({}));
+        if (!guestResponse.ok || !guestData.ok) {
+          setError(guestData?.error || "Gastadresse konnte nicht in Shopware gespeichert werden.");
+          return;
+        }
+        if (guestData.contextToken) {
+          activeContextToken = String(guestData.contextToken);
+          applyContextToken(activeContextToken);
+        }
+      }
 
-    appendInput("redirectTo", "frontend.checkout.confirm.page");
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contextToken: activeContextToken,
+          paymentMethodId: selectedPayment,
+          shippingMethodId: selectedShipping,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        setError(data?.error || "Die Bestellung konnte nicht über Shopware erstellt werden.");
+        return;
+      }
 
-    for (const [productId, quantity] of productQuantities) {
-      appendInput(`lineItems[${productId}][id]`, productId);
-      appendInput(`lineItems[${productId}][referencedId]`, productId);
-      appendInput(`lineItems[${productId}][type]`, "product");
-      appendInput(`lineItems[${productId}][stackable]`, "1");
-      appendInput(`lineItems[${productId}][removable]`, "1");
-      appendInput(`lineItems[${productId}][quantity]`, String(quantity));
+      const redirectUrl = data?.payment?.redirectUrl;
+      if (typeof redirectUrl === "string" && redirectUrl) {
+        window.location.assign(redirectUrl);
+        return;
+      }
+
+      setOrderSuccess(`Bestellung erfolgreich erstellt${data?.order?.orderNumber ? `: ${data.order.orderNumber}` : "."}`);
+      setCartItems([]);
+      setCartTotal(0);
+      setShippingCostsRaw(0);
+      window.dispatchEvent(new Event("cart-updated"));
+    } catch {
+      setError("Shopware Checkout ist nicht erreichbar.");
+    } finally {
+      setSubmitting(false);
     }
-
-    document.body.appendChild(form);
-    form.submit();
   };
 
   // --- Warenkorb zuruecksetzen ---
@@ -313,9 +316,6 @@ try {
           return;
         }
       }
-
-      // Custom-Cart in localStorage leeren
-      localStorage.removeItem("custom-cart-items");
 
       // Token aus localStorage und Cookie loeschen
       // WICHTIG: Cookie muss ebenfalls geloescht werden, sonst
@@ -344,12 +344,6 @@ try {
     setError("");
 
     try {
-      if (item.id.startsWith("custom:")) {
-        setCustomCartItemQuantity(item.id, nextQuantity);
-        await loadCart();
-        return;
-      }
-
       const productId = resolveShopwareProductId(item.referencedId || item.id);
       if (!productId) {
         setError("Die Menge dieses Artikels kann nicht geändert werden.");
@@ -367,11 +361,7 @@ try {
   const removeItem = async (item: CartItem) => {
     setError("");
     try {
-      if (item.id.startsWith("custom:")) {
-        removeCustomCartItem(item.id);
-      } else {
-        await removeProductFromShopwareCart(item.id);
-      }
+      await removeProductFromShopwareCart(item.id);
       await loadCart();
     } catch {
       setError("Der Artikel konnte nicht entfernt werden.");
@@ -397,6 +387,7 @@ try {
           })}
         </ol>
 
+        {orderSuccess && <div role="status" className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{orderSuccess}</div>}
         {error && <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_440px]">
@@ -406,7 +397,7 @@ try {
               {cartItems.length === 0 ? <div className="rounded-[18px] border border-dashed border-[#cfd8e5] bg-white p-8 text-center text-[#667287]">Dein Warenkorb ist leer.</div> : cartItems.map((item, index) => {
                 const image = coverUrl(item.cover);
                 return <article key={item.id} className="flex flex-col gap-5 rounded-[18px] bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center sm:p-6">
-                  <div className={`flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[14px] ${index % 2 ? "bg-[#dbf5f0]" : "bg-[#e8edff]"}`}>{image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <span className="text-3xl text-[#0e66e0]">●</span>}</div>
+                  <div className={`flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[14px] ${index % 2 ? "bg-[#dbf5f0]" : "bg-[#e8edff]"}`}>{image ? <Image src={image} alt="" width={112} height={112} unoptimized className="h-full w-full object-cover" /> : <span className="text-3xl text-[#0e66e0]">●</span>}</div>
                   <div className="min-w-0 flex-1"><h3 className="text-lg font-semibold">{item.label}</h3><p className="mt-1 text-sm text-[#667287]">Digitales Produkt · Sofort verfügbar</p><div className="mt-5 flex flex-wrap items-center gap-4"><div className="flex h-[34px] items-center rounded-lg bg-[#f5f7fc] text-sm"><button type="button" aria-label={`${item.label} Menge verringern`} onClick={() => void changeItemQuantity(item, item.quantity - 1)} className="h-full px-3 text-base text-[#333f55] hover:text-[#0e66e0]" disabled={item.quantity <= 1}>−</button><span className="w-7 text-center font-semibold">{item.quantity}</span><button type="button" aria-label={`${item.label} Menge erhöhen`} onClick={() => void changeItemQuantity(item, item.quantity + 1)} className="h-full px-3 text-base text-[#333f55] hover:text-[#0e66e0]">+</button></div><button type="button" onClick={() => void removeItem(item)} className="text-sm font-semibold text-[#0e66e0] hover:text-[#0b55b8]">Entfernen</button></div></div>
                   <div className="text-left sm:self-start sm:text-right"><p className="text-lg font-bold">{fmtPrice(item.priceTotal)}</p><p className="mt-1 text-xs text-[#667287]">inkl. MwSt.</p></div>
                 </article>;

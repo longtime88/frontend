@@ -129,22 +129,15 @@ export async function POST(request: Request) {
   const contextToken = payloadContextToken || cookieContextToken;
   const shippingAddress = payload.shippingAddress || {};
   const billingAddress = payload.billingAddress || {};
-  const paymentMethod = String(payload.paymentMethod ?? "").trim();
-  const shippingMethod = String(payload.shippingMethod ?? "").trim();
-  const lineItems = Array.isArray(payload.lineItems) ? payload.lineItems : [];
+  const paymentMethodId = String(payload.paymentMethodId ?? payload.paymentMethod ?? "").trim();
+  const shippingMethodId = String(payload.shippingMethodId ?? payload.shippingMethod ?? "").trim();
 
   logCheckout("request-received", {
     hasContextToken: Boolean(contextToken),
     contextToken: maskToken(contextToken),
     hasCustomerToken: Boolean(cookieCustomerToken),
-    lineItemsCount: lineItems.length,
-    lineItems: lineItems.map((item: Record<string, unknown>) => ({
-      type: String(item.type ?? ""),
-      referencedId: String(item.referencedId ?? "").slice(0, 8),
-      quantity: Number(item.quantity ?? 0),
-    })),
-    paymentMethod: paymentMethod ? paymentMethod.slice(0, 8) : "",
-    shippingMethod: shippingMethod ? shippingMethod.slice(0, 8) : "",
+    paymentMethod: paymentMethodId ? paymentMethodId.slice(0, 8) : "",
+    shippingMethod: shippingMethodId ? shippingMethodId.slice(0, 8) : "",
     hasShippingAddress: Boolean(shippingAddress?.firstName || shippingAddress?.lastName || shippingAddress?.street),
     hasBillingAddress: Boolean(billingAddress?.firstName || billingAddress?.lastName || billingAddress?.street),
   });
@@ -158,35 +151,31 @@ export async function POST(request: Request) {
   if (cookieCustomerToken) headers["sw-customer-token"] = cookieCustomerToken;
 
   try {
-    const countryId = shippingAddress.countryId || billingAddress.countryId || "f3e1b85c74df4e8fae2f3ef2da38e44f";
+    let activeContextToken = contextToken;
 
-    const body = {
-      lineItems,
-      shippingAddress: {
-        firstName: shippingAddress.firstName || "",
-        lastName: shippingAddress.lastName || "",
-        street: shippingAddress.street || "",
-        streetAdditional: shippingAddress.streetAdditional || "",
-        city: shippingAddress.city || "",
-        zipcode: shippingAddress.zipcode || "",
-        countryId,
-        countryStateId: shippingAddress.countryStateId || null,
-        company: shippingAddress.company || "",
-      },
-      billingAddress: {
-        firstName: billingAddress.firstName || "",
-        lastName: billingAddress.lastName || "",
-        street: billingAddress.street || "",
-        streetAdditional: billingAddress.streetAdditional || "",
-        city: billingAddress.city || "",
-        zipcode: billingAddress.zipcode || "",
-        countryId,
-        countryStateId: billingAddress.countryStateId || null,
-        company: billingAddress.company || "",
-      },
-      paymentMethod: paymentMethod || undefined,
-      shippingMethod: shippingMethod || undefined,
-    };
+    if (paymentMethodId || shippingMethodId) {
+      const contextResponse = await shopwareFetch("/context", {
+        method: "PATCH",
+        body: JSON.stringify({
+          ...(paymentMethodId ? { paymentMethodId } : {}),
+          ...(shippingMethodId ? { shippingMethodId } : {}),
+        }),
+        cache: "no-store",
+      }, headers);
+      const contextData = contextResponse.json as Record<string, unknown>;
+      const contextTokenFromResponse = contextResponse.response.headers.get("sw-context-token") ||
+        (typeof contextData?.token === "string" ? contextData.token : "");
+      if (!contextResponse.response.ok) {
+        const errors = contextData?.errors as Array<Record<string, unknown>> | undefined;
+        return NextResponse.json({ error: errors?.[0]?.detail || "Zahlungs- oder Versandart konnte in Shopware nicht gesetzt werden." }, { status: contextResponse.response.status });
+      }
+      if (contextTokenFromResponse) {
+        activeContextToken = contextTokenFromResponse;
+        headers["sw-context-token"] = activeContextToken;
+      }
+    }
+
+    const body = {};
 
     const { response, json } = await shopwareFetch("/checkout/order", {
       method: "POST",
@@ -197,7 +186,8 @@ export async function POST(request: Request) {
     const data = json as Record<string, unknown>;
     const nextContextToken =
       response.headers.get("sw-context-token") ||
-      (typeof data?.token === "string" ? data.token : "");
+      (typeof data?.token === "string" ? data.token : "") ||
+      activeContextToken;
 
     if (!response.ok) {
       logCheckout("shopware-order-failed", {
@@ -228,9 +218,32 @@ export async function POST(request: Request) {
       orderNumber: typeof data?.orderNumber === "string" ? data.orderNumber : "",
     });
 
+    const orderId = typeof data?.id === "string" ? data.id : "";
+    let payment: { redirectUrl?: string | null } = {};
+
+    if (orderId) {
+      const origin = new URL(request.url).origin;
+      const paymentResponse = await shopwareFetch("/handle-payment", {
+        method: "POST",
+        body: JSON.stringify({
+          orderId,
+          finishUrl: `${origin}/Checkout?payment=success&orderId=${encodeURIComponent(orderId)}`,
+          errorUrl: `${origin}/Checkout?payment=failed&orderId=${encodeURIComponent(orderId)}`,
+        }),
+        cache: "no-store",
+      }, headers);
+      const paymentData = paymentResponse.json as Record<string, unknown>;
+      if (!paymentResponse.response.ok) {
+        const errors = paymentData?.errors as Array<Record<string, unknown>> | undefined;
+        return NextResponse.json({ error: errors?.[0]?.detail || "Shopware-Zahlung konnte nicht gestartet werden.", order: data }, { status: paymentResponse.response.status });
+      }
+      payment = { redirectUrl: typeof paymentData?.redirectUrl === "string" ? paymentData.redirectUrl : null };
+    }
+
     return NextResponse.json({
       ok: true,
       order: data,
+      payment,
       contextToken: nextContextToken || undefined,
     });
   } catch (error) {

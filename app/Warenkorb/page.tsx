@@ -1,12 +1,6 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
+import { SHOPWARE_CART_URL } from "@/lib/shopwareStorefront";
 
 export default function Warenkorb() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace("/Checkout");
-  }, [router]);
-  return null;
+  redirect(SHOPWARE_CART_URL);
 }

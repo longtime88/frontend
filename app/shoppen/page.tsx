@@ -1,168 +1,40 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import Product from "@/app/components/Product";
+import fallbackCatalog from "@/app/Data.json";
 import { getMediaUrl, getShopwareApiBase } from "@/lib/shopwareStorefront";
 
-type ProductItem = {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  description: string;
-};
+type ProductItem = { id: string; shopwareProductId?: string; name: string; price: number; image: string; description: string; category: string };
 
 async function getProducts(category?: string): Promise<ProductItem[]> {
-  const baseUrl = getShopwareApiBase();
-  const url = `${baseUrl}/store-api/product${category ? `?category=${encodeURIComponent(category)}` : ""}`;
-  const headers = { "sw-access-key": process.env.SHOPWARE_STORE_API_ACCESS_KEY || "" };
-
   try {
-    const res = await fetch(url, { headers, next: { revalidate: 60 } });
-    if (!res.ok) return [];
-
-    const data = await res.json().catch(() => ({ elements: [] }));
-    const items = (data.elements || []) as Array<Record<string, unknown>>;
-    return items.map((raw) => {
-      const translated = typeof raw.translated === "object" && raw.translated !== null
-        ? raw.translated as Record<string, unknown> : null;
+    const response = await fetch(`${getShopwareApiBase()}/store-api/product${category ? `?category=${encodeURIComponent(category)}` : ""}`, { headers: { "sw-access-key": process.env.SHOPWARE_STORE_API_ACCESS_KEY || "" }, next: { revalidate: 60 } });
+    if (!response.ok) return [];
+    const data = await response.json().catch(() => ({ elements: [] }));
+    return (data.elements || []).map((raw: Record<string, unknown>) => {
+      const translated = raw.translated as Record<string, unknown> | undefined;
       const price = (raw.calculatedPrice ?? raw.price) as Record<string, unknown> | undefined;
-      const cover = raw.cover as Record<string, unknown> | null | undefined;
-      const coverMedia = (cover?.media as Record<string, unknown> | undefined) ?? null;
-      const image = getMediaUrl(
-        String(
-          (coverMedia?.url as string | undefined) ??
-          (coverMedia?.thumbnails as Array<Record<string, unknown>> | undefined)?.[0]?.url ??
-          (cover?.url as string | undefined) ??
-          ""
-        )
-      );
-      return {
-        id: String(raw.id ?? ""),
-        name: String(translated?.name ?? raw.name ?? "Unbenanntes Produkt"),
-        description: String(translated?.description ?? raw.description ?? ""),
-        price: typeof price?.total === "number"
-          ? price.total
-          : typeof price?.unitPrice === "number"
-            ? price.unitPrice
-            : typeof price?.gross === "number"
-              ? price.gross
-              : 0,
-        image,
-      };
+      const cover = raw.cover as Record<string, unknown> | undefined;
+      const media = cover?.media as Record<string, unknown> | undefined;
+      return { id: String(raw.id ?? ""), shopwareProductId: String(raw.id ?? ""), name: String(translated?.name ?? raw.name ?? "Produkt"), description: String(translated?.description ?? raw.description ?? ""), price: typeof price?.total === "number" ? price.total : typeof price?.unitPrice === "number" ? price.unitPrice : 0, image: getMediaUrl(String(media?.url ?? "")), category: "Shopware Lösung" };
     });
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
 const categories = [
-  { id: "shopware", name: "Shopware Plugins", count: "24" },
-  { id: "templates", name: "Frontend Templates", count: "18" },
-  { id: "automation", name: "Automation", count: "12" },
-  { id: "mentoring", name: "Mentoring", count: "8" },
+  { id: "", name: "Alle Produkte" },
+  { id: "shopware", name: "Shopware Plugins" },
+  { id: "templates", name: "Frontend Templates" },
+  { id: "automation", name: "Automation" },
+  { id: "mentoring", name: "Mentoring" },
 ];
 
 export const dynamic = "force-dynamic";
 
-type ShoppenPageProps = {
-  searchParams?: {
-    category?: string | string[];
-  };
-};
+export default async function ShoppenPage({ searchParams }: { searchParams?: Promise<{ category?: string | string[] }> }) {
+  const params = await searchParams;
+  const selectedCategory = Array.isArray(params?.category) ? params.category[0] : params?.category;
+  const remoteProducts = await getProducts(selectedCategory);
+  const products = remoteProducts.length > 0 ? remoteProducts : fallbackCatalog.products.map((product) => ({ id: String(product.id), name: product.title, description: product.description, price: product.price, image: "", category: product.category === "plugin" ? "Shopware Plugin" : product.category }));
 
-export default async function ShoppenPage({ searchParams }: ShoppenPageProps) {
-  const selectedCategory = Array.isArray(searchParams?.category)
-    ? searchParams?.category[0]
-    : searchParams?.category;
-  const products = await getProducts(selectedCategory);
-
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="border-b border-gray-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">Digitale Produkte</h1>
-            <nav className="text-sm text-gray-600">
-              <Link href="/" className="hover:text-orange-600">Startseite</Link> &rsaquo; Shoppen
-            </nav>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <aside className="lg:w-64">
-            <div className="border border-gray-200 rounded-md p-4">
-              <h2 className="text-sm font-bold text-gray-900 mb-3">Kategorien</h2>
-              <nav className="space-y-1">
-                {categories.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/shoppen?category=${cat.id}`}
-                    className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded"
-                  >
-                    <span>{cat.name}</span>
-                    <span className="text-xs text-gray-500">{cat.count}</span>
-                  </Link>
-                ))}
-              </nav>
-            </div>
-          </aside>
-
-          <div className="flex-1">
-            {products.length === 0 ? (
-              <div className="border border-gray-200 rounded-md p-12 text-center">
-                <p className="text-gray-500">Keine Produkte in dieser Kategorie.</p>
-              </div>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {products.map((p) => (
-                  <div
-                    key={p.id}
-                    className="border border-gray-200 rounded-md overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <div className="aspect-[4/3] bg-gray-100 relative">
-                      {p.image ? (
-                        <Image
-                          src={p.image}
-                          alt={p.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-4xl text-gray-300">
-                          📦
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">{p.name}</h3>
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {p.description || "Direkt einsetzbares Digital-Produkt"}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">
-                          {typeof p.price === "number" ? `${p.price.toFixed(2)} €` : "Preis auf Anfrage"}
-                        </span>
-                        <Link
-                          href={`/Checkout?product=${encodeURIComponent(p.id)}`}
-                          className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-1.5 px-4 rounded transition-colors"
-                        >
-                          In den Warenkorb
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <Analytics />
-      <SpeedInsights />
-    </div>
-  );
+  return <div className="min-h-screen bg-[#f7f5f2]"><section className="bg-[#111111] px-4 py-14 text-white sm:px-6"><div className="mx-auto max-w-7xl"><p className="mb-3 text-xs font-medium uppercase tracking-[0.22em] text-[#c8a97e]">Die Auswahl</p><h1 className="font-display text-5xl font-medium">Alle Produkte</h1><p className="mt-4 max-w-lg text-sm leading-relaxed text-[#999999]">Digitale Werkzeuge, Templates und Wissen für deinen nächsten guten Schritt.</p></div></section><div className="mx-auto max-w-7xl px-4 py-12 sm:px-6"><div className="mb-10 flex gap-2 overflow-x-auto pb-2">{categories.map((category) => <Link key={category.id || "all"} href={category.id ? `/shoppen?category=${category.id}` : "/shoppen"} className={`shrink-0 border px-4 py-2 text-xs font-medium uppercase tracking-widest transition-colors ${selectedCategory === category.id || (!selectedCategory && !category.id) ? "border-[#0d0d0d] bg-[#0d0d0d] text-white" : "border-[#ddd8d1] text-[#888888] hover:border-[#0d0d0d] hover:text-[#0d0d0d]"}`}>{category.name}</Link>)}</div>{products.length === 0 ? <div className="py-20 text-center text-[#888888]">Keine Produkte gefunden.</div> : <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 lg:grid-cols-4">{products.map((product) => <Product key={product.id} product={product} />)}</div>}</div></div>;
 }

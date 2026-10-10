@@ -1,5 +1,6 @@
+import { getMediaUrl } from "@/lib/shopwareStorefront";
+
 const CONTEXT_TOKEN_KEY = "sw-context-token";
-const CUSTOM_CART_KEY = "custom-cart-items";
 const SHOPWARE_HEX_ID_PATTERN = /^[0-9a-f]{32}$/i;
 
 function normalizeShopwareId(value: string): string {
@@ -31,44 +32,6 @@ function writeStorageItem(key: string, value: string): void {
   localStorage.setItem(key, value);
 }
 
-function stripCustomPrefix(id: string): string {
-  return id.startsWith("custom:") ? id.slice("custom:".length) : id;
-}
-
-function dedupeCustomItems(customItems: CustomCartItem[]): CustomCartItem[] {
-  const seen = new Set<string>();
-  const uniqueCustom: CustomCartItem[] = [];
-
-  for (let index = customItems.length - 1; index >= 0; index -= 1) {
-    const item = customItems[index];
-    if (!seen.has(item.shopwareId)) {
-      seen.add(item.shopwareId);
-      uniqueCustom.push(item);
-    }
-  }
-
-  return uniqueCustom.reverse();
-}
-
-function createSyntheticCustomCartLine(custom: CustomCartItem): Record<string, unknown> {
-  const totalPrice = custom.price * custom.quantity * 100;
-
-  return {
-    id: `custom:${custom.id}`,
-    referencedId: custom.shopwareId,
-    label: custom.name,
-    quantity: custom.quantity,
-    priceTotal: totalPrice,
-    price: { totalPrice },
-    cover: {
-      media: {
-        url: custom.image,
-        translated: { alt: custom.name },
-      },
-    },
-  };
-}
-
 // ─── Context Token ────────────────────────────────────────────
 
 export function getShopwareContextToken(): string {
@@ -96,130 +59,6 @@ export function resolveShopwareProductId(input: string | number | undefined, fal
   }
 
   return "";
-}
-
-// ─── Eigener Warenkorb (Bild + Preis bleiben erhalten) ─────────
-
-export type CustomCartItem = {
-  id: string;
-  shopwareId: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-};
-
-export function addCustomCartItem(item: CustomCartItem): void {
-  if (typeof window === "undefined") return;
-
-  const items = getCustomCartItems();
-  const existing = items.find((currentItem) => currentItem.shopwareId === item.shopwareId);
-
-  if (existing) {
-    existing.quantity += item.quantity;
-  } else {
-    items.push(item);
-  }
-
-  writeStorageItem(CUSTOM_CART_KEY, JSON.stringify(items));
-}
-
-export function getCustomCartItems(): CustomCartItem[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    return JSON.parse(readStorageItem(CUSTOM_CART_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-export function removeCustomCartItem(id: string): void {
-  if (typeof window === "undefined") return;
-
-  const normalizedId = stripCustomPrefix(id);
-  const items = getCustomCartItems().filter(
-    (item) => item.id !== id && item.id !== normalizedId && item.shopwareId !== id
-  );
-
-  writeStorageItem(CUSTOM_CART_KEY, JSON.stringify(items));
-}
-
-export function setCustomCartItemQuantity(id: string, quantity: number): void {
-  if (typeof window === "undefined") return;
-
-  const normalizedId = stripCustomPrefix(id);
-  const items = getCustomCartItems()
-    .map((item) => {
-      const matches = item.id === id || item.id === normalizedId || item.shopwareId === normalizedId;
-      return matches ? { ...item, quantity } : item;
-    })
-    .filter((item) => item.quantity > 0);
-
-  writeStorageItem(CUSTOM_CART_KEY, JSON.stringify(items));
-}
-
-export function mergeCartWithCustom(
-  shopwareItems: Record<string, unknown>,
-  customItems: CustomCartItem[]
-): Array<Record<string, unknown>> {
-  const uniqueCustom = dedupeCustomItems(customItems);
-  const mergedMap = new Map<string, Record<string, unknown>>();
-
-  for (const lineItem of Object.values(shopwareItems)) {
-    const shopwareId = String((lineItem as Record<string, unknown>).id ?? "");
-    if (shopwareId && !mergedMap.has(shopwareId)) {
-      mergedMap.set(shopwareId, lineItem as Record<string, unknown>);
-    }
-  }
-
-  const byShopware = new Map<string, string>();
-  for (const [lineId, lineItem] of mergedMap) {
-    const referencedId = String((lineItem as Record<string, unknown>).referencedId ?? "");
-    if (referencedId) byShopware.set(referencedId, lineId);
-  }
-
-  for (const custom of uniqueCustom) {
-    const matchingLineId = byShopware.get(custom.shopwareId);
-
-    if (matchingLineId) {
-      const existing = mergedMap.get(matchingLineId);
-      if (!existing) continue;
-
-      mergedMap.set(matchingLineId, {
-        ...existing,
-        label: custom.name,
-        price: { totalPrice: custom.price * 100 },
-        priceTotal: custom.price * custom.quantity * 100,
-        cover: {
-          media: {
-            url: custom.image,
-            translated: { alt: custom.name },
-          },
-        },
-        quantity: custom.quantity,
-      });
-
-      continue;
-    }
-
-    mergedMap.set(`custom:${custom.id}`, createSyntheticCustomCartLine(custom));
-  }
-
-  const byReference = new Map<string, Record<string, unknown>>();
-  const result: Array<Record<string, unknown>> = [];
-
-  for (const lineItem of mergedMap.values()) {
-    const referencedId = String((lineItem as Record<string, unknown>).referencedId ?? "");
-    const dedupeKey = referencedId || `rand-${Math.random()}`;
-
-    if (!byReference.has(dedupeKey)) {
-      byReference.set(dedupeKey, lineItem);
-      result.push(lineItem);
-    }
-  }
-
-  return result;
 }
 
 // ─── Shopware Warenkorb (API) ─────────────────────────────────
@@ -312,4 +151,61 @@ export async function removeProductFromShopwareCart(itemId: string): Promise<voi
 
     await new Promise((resolve) => setTimeout(resolve, 300));
   });
+}
+
+export type ShopwareCartLineItem = {
+  id: string;
+  referencedId: string;
+  label: string;
+  quantity: number;
+  priceTotal: number;
+  image: string;
+};
+
+export type ShopwareCartSnapshot = {
+  items: ShopwareCartLineItem[];
+  totalPrice: number;
+  contextToken: string;
+};
+
+export async function fetchShopwareCart(): Promise<ShopwareCartSnapshot> {
+  const contextToken = getShopwareContextToken();
+  const response = await fetch(`/api/cart/details?contextToken=${encodeURIComponent(contextToken)}`, { cache: "no-store" });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data?.ok) {
+    throw new Error(data?.error || "Shopware-Warenkorb konnte nicht geladen werden.");
+  }
+
+  const nextContextToken = typeof data.contextToken === "string" && data.contextToken
+    ? data.contextToken
+    : contextToken;
+  if (nextContextToken) setShopwareContextToken(nextContextToken);
+
+  const rawItems = data.lineItems && typeof data.lineItems === "object"
+    ? Object.values(data.lineItems as Record<string, Record<string, unknown>>)
+    : Array.isArray(data.cart?.lineItems)
+      ? data.cart.lineItems as Array<Record<string, unknown>>
+      : [];
+
+  const items = rawItems.map((item) => {
+    const price = item.price as Record<string, unknown> | undefined;
+    const cover = item.cover as Record<string, unknown> | undefined;
+    const media = cover?.media as Record<string, unknown> | undefined;
+    return {
+      id: String(item.id ?? ""),
+      referencedId: String(item.referencedId ?? ""),
+      label: String(item.label ?? "Produkt"),
+      quantity: Number(item.quantity ?? 1) || 1,
+      priceTotal: typeof price?.totalPrice === "number" ? price.totalPrice : 0,
+      image: getMediaUrl(String(media?.url ?? "")),
+    };
+  }).filter((item) => item.id);
+
+  const cartPrice = data.cart?.price as Record<string, unknown> | undefined;
+  const totalPrice = typeof cartPrice?.totalPrice === "number"
+    ? cartPrice.totalPrice
+    : items.reduce((sum, item) => sum + item.priceTotal, 0);
+
+  return { items, totalPrice, contextToken: nextContextToken };
 }

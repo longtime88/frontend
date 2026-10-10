@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { addProductToShopwareCart, addCustomCartItem, resolveShopwareProductId } from "@/lib/shopwareCart";
+import { addProductToShopwareCart, resolveShopwareProductId } from "@/lib/shopwareCart";
 
 type SearchProduct = {
   id: string;
@@ -45,41 +45,17 @@ function SearchContent() {
     load();
   }, [query]);
 
-  const getProductPrice = (product: SearchProduct) => {
-    if (typeof product.calculatedPrice?.unitPrice === "number") {
-      return product.calculatedPrice.unitPrice / 100;
-    }
-
-    if (typeof product.price === "number") {
-      return product.price;
-    }
-
-    return 0;
-  };
-
   const handleAddToCart = async (product: SearchProduct) => {
     setAddingProductId(product.id);
     setFeedback(null);
     try {
       const shopwareId = resolveShopwareProductId(product.id);
-      const customId = shopwareId || `custom:${product.id}`;
-      const price = getProductPrice(product);
-
-      addCustomCartItem({
-        id: product.id,
-        shopwareId: customId,
-        name: product.name,
-        price,
-        image: "/next.svg",
-        quantity: 1,
-      });
-
-      if (shopwareId) {
-        await addProductToShopwareCart(shopwareId, 1);
-      }
+      if (!shopwareId) throw new Error("Dieses Produkt ist nicht mit Shopware verknüpft.");
+      await addProductToShopwareCart(shopwareId, 1);
+      window.dispatchEvent(new Event("cart-updated"));
 
       setFeedback({ type: "success", message: `${product.name} wurde zum Warenkorb hinzugefügt.` });
-      router.push(`/Checkout?product=${encodeURIComponent(product.id)}`);
+      router.push("/Checkout");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Produkt konnte nicht in den Warenkorb gelegt werden.";

@@ -1,10 +1,6 @@
-import { cookies } from "next/headers";
-import CheckoutClient from "./CheckoutClient";
+import { redirect } from "next/navigation";
+import { SHOPWARE_CART_URL } from "@/lib/shopwareStorefront";
 
-export default async function CheckoutPage() {
-  const cookieStore = await cookies();
-  const contextToken =
-    cookieStore.get("sw-context-token")?.value || "";
-
-  return <CheckoutClient initialContextToken={contextToken} />;
+export default function CheckoutPage() {
+  redirect(SHOPWARE_CART_URL);
 }

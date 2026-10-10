@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
   const baseUrl = process.env.SHOPWARE_URL || process.env.BACKEND_API_URL || "http://localhost:8080";
   const cleanUrl = baseUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
-  const removeUrl = `${cleanUrl}/store-api/checkout/line-item?id=${encodeURIComponent(itemId)}`;
+  const removeUrl = `${cleanUrl}/store-api/checkout/cart/line-item`;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -44,14 +44,24 @@ export async function POST(request: Request) {
   try {
     let upstream: Response;
     try {
-      upstream = await fetch(removeUrl, { method: "DELETE", headers, cache: "no-store" });
+      upstream = await fetch(removeUrl, {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ ids: [itemId] }),
+        cache: "no-store",
+      });
     } catch (error) {
       const allowSelfSigned = process.env.SHOPWARE_ALLOW_SELF_SIGNED === "true";
       if (!allowSelfSigned) throw error;
       const previousTlsMode = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       try {
-        upstream = await fetch(removeUrl, { method: "DELETE", headers, cache: "no-store" });
+        upstream = await fetch(removeUrl, {
+          method: "DELETE",
+          headers,
+          body: JSON.stringify({ ids: [itemId] }),
+          cache: "no-store",
+        });
       } finally {
         if (previousTlsMode === undefined) {
           delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
@@ -80,11 +90,21 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       ok: true,
       cart: data,
       contextToken: nextContextToken || undefined,
     });
+    if (nextContextToken) {
+      res.cookies.set("sw-context-token", nextContextToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
+      });
+    }
+    return res;
   } catch {
     return NextResponse.json(
       { error: "Shopware Cart API ist nicht erreichbar." },
